@@ -102,7 +102,6 @@ def select_cutting_plan(all_combinations, required_cuts):
             # この組み合わせで満たせる需要をカウント
             combo_cuts = Counter(combo['cuts'])
             score = 0
-            can_use = True
             
             for cut_length, cut_count in combo_cuts.items():
                 if cut_length in remaining:
