@@ -1,5 +1,6 @@
 from read_csv import getPatterns
 import itertools
+import time
 
 def expand_required_cuts(required_dict):
     """
@@ -86,7 +87,7 @@ def optimal_cutting_plan(c, a, q):
 
 if __name__ == "__main__":
     # 設定径: D10, D13, D19
-    diameter = 'D19'
+    diameter = 'D10'
     pattern = getPatterns(diameter)
     available_rods = pattern['base_patterns']
     required_cuts = pattern['tasks']
@@ -102,7 +103,9 @@ if __name__ == "__main__":
     expand_required_cuts_list = expand_required_cuts(required_cuts)
     
     # 全組み合わせを計算
+    start = time.perf_counter()
     all_combinations = generate_all_combinations(available_rods, expand_required_cuts_list)
+    end = time.perf_counter()
     print()
 
     # 最適化問題用に変数を定義
@@ -125,7 +128,7 @@ if __name__ == "__main__":
     for i in range(len(all_combinations)):
         j = optimal_solution[i]
         while(j > 0):
-            print(f"{k:3d}. {all_combinations[i]['rod_length']} = {all_combinations[i]['cuts']}")
+            print(f"{k:3d}. {all_combinations[i]['rod_length']} = {all_combinations[i]['cuts']}, [{all_combinations[i]['rod_length']-sum(all_combinations[i]['cuts'])}]")
             total_rod_length += all_combinations[i]['rod_length']
             used_length += sum(all_combinations[i]['cuts'])
             used_list.extend(all_combinations[i]['cuts'])
@@ -136,6 +139,7 @@ if __name__ == "__main__":
     # 要求本数と解の切り出し個数が同じかチェック
     used_count = [used_list.count(i) for i in l]
     print(used_count == q)
-
+    # カットパターン探索時間
+    print(f"time: {end - start:.2f} [s]")
     # 歩留り率
-    print(f"歩留り率: {used_length * 100 / total_rod_length} %")
+    print(f"yield_rate: {used_length * 100 / total_rod_length:.2f} %")
