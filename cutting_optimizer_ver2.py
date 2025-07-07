@@ -16,6 +16,8 @@ def generate_all_combinations(available_rods, required_cuts):
     指定された棒の長さから切り出し可能な全ての組み合わせを生成
     """
     all_combinations = []
+    required_cuts.extend(available_rods)
+    # print(required_cuts)
     
     # 1本から最大可能本数まで全ての組み合わせを試す
     for rod_length in available_rods:
@@ -24,12 +26,12 @@ def generate_all_combinations(available_rods, required_cuts):
 
         for num_pieces in range(1, max_pieces + 1):
             for combo in itertools.combinations(required_cuts, num_pieces):
-                if sum(combo) <= rod_length:
+                if sum(combo) <= rod_length and not set(combo).issubset(set(available_rods)):
                     combinations.add(combo)
 
         # カットパターンと歩留り率の辞書を追加
         for combo in combinations:
-            loss = (rod_length - sum(combo)) / rod_length
+            loss = (rod_length - sum(combo)) * 100 / rod_length
             all_combinations.append({
                 'rod_length': rod_length,
                 'cuts': tuple(combo),
@@ -68,7 +70,7 @@ def optimal_cutting_plan(c, a, q):
     objective = pulp.lpSum(c[j] * x[j] for j in range(n))
     prob += objective, "Total_Loss"
 
-    # 制約条件: 各長さjに対して、生産量 >= 必要量
+    # 制約条件: 各長さjに対して、生産量 == 必要量
     for i in range(m):
         production_constraint = pulp.lpSum(a[j][i] * x[j] for j in range(n))
         prob += production_constraint == q[i], f"Demand_constraint_{i+1}"
@@ -87,7 +89,7 @@ def optimal_cutting_plan(c, a, q):
 
 if __name__ == "__main__":
     # 設定径: D10, D13, D19
-    diameter = 'D19'
+    diameter = 'D13'
     pattern = getPatterns(diameter)
     available_rods = pattern['base_patterns']
     required_cuts = pattern['tasks']
@@ -108,7 +110,7 @@ if __name__ == "__main__":
     end = time.perf_counter()
     print()
 
-    # 最適化問題用に変数を定義
+    # 最適化問題用:パターンリストa,ロスリストc
     a = []
     c = []
     for combo in all_combinations:
@@ -139,7 +141,7 @@ if __name__ == "__main__":
     # 要求本数と解の切り出し個数が同じかチェック
     used_count = [used_list.count(i) for i in l]
     
-    if (used_count == q):
+    if used_count == q:
         # カットパターン探索時間
         print(f"time: {end - start:.2f} [s]")
         # 歩留り率
