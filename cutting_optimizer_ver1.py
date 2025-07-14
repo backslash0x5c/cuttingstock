@@ -16,6 +16,8 @@ def generate_all_combinations(available_rods, required_cuts):
     指定された棒の長さから切り出し可能な全ての組み合わせを生成
     """
     all_combinations = []
+    # 大きいrodから小さいrodの切出しを考慮
+    # required_cuts.extend(available_rods)
     
     # 1本から最大可能本数まで全ての組み合わせを試す
     for rod_length in available_rods:
@@ -24,6 +26,7 @@ def generate_all_combinations(available_rods, required_cuts):
 
         for num_pieces in range(1, max_pieces + 1):
             for combo in itertools.combinations(required_cuts, num_pieces):
+                # if sum(combo) <= rod_length and not set(combo).issubset(set(available_rods)):
                 if sum(combo) <= rod_length:
                     combinations.add(combo)
 
@@ -41,7 +44,7 @@ def generate_all_combinations(available_rods, required_cuts):
 
     # 結果表示（最初の20通り）
     # for i, combo in enumerate(all_combinations[:20]):
-    #     print(f"{i+1:3d}. {combo['rod_length']} = {combo['cuts']}: {combo['loss']}")
+    #     print(f"{i+1:3d}. {combo['rod_length']} = {combo['cuts']} [{combo['loss']}]")
     # print(f"{len(all_combinations)} combinations")
 
     return all_combinations
@@ -68,7 +71,7 @@ def optimal_cutting_plan(c, a, q):
     objective = pulp.lpSum(c[j] * x[j] for j in range(n))
     prob += objective, "Total_Loss"
 
-    # 制約条件: 各長さjに対して、生産量 >= 必要量
+    # 制約条件: 各長さiに対して、生産量 == 必要量
     for i in range(m):
         production_constraint = pulp.lpSum(a[j][i] * x[j] for j in range(n))
         prob += production_constraint == q[i], f"Demand_constraint_{i+1}"
@@ -87,7 +90,7 @@ def optimal_cutting_plan(c, a, q):
 
 if __name__ == "__main__":
     # 設定径: D10, D13, D19
-    diameter = 'D19'
+    diameter = 'D10'
     pattern = getPatterns(diameter)
     available_rods = pattern['base_patterns']
     required_cuts = pattern['tasks']
@@ -117,8 +120,8 @@ if __name__ == "__main__":
    
     # 最適な切り出しプランを計算
     optimal_solution, optimal_value = optimal_cutting_plan(c, a, q)
-    # print(f"最適解: {optimal_solution}")
-    # print(f"最適値: {optimal_value}")
+    # print(f"optimal_solution:\n{optimal_solution}\n")
+    # print(f"optimal_value: {optimal_value}\n")
 
     # 最適な切り出し結果
     k = 1
@@ -141,9 +144,13 @@ if __name__ == "__main__":
     
     if (used_count == q):
         # カットパターン探索時間
-        print(f"time: {end - start:.2f} [s]")
+        print(f"Time: {end - start:.4f} [s]")
+        # 端材
+        print(f"Loss length: {total_rod_length - used_length} [mm]")
+        # 使用材の合計
+        print(f"Total rod length: {total_rod_length} [mm]")
         # 歩留り率
-        print(f"Yield_rate: {used_length * 100 / total_rod_length:.2f} %")
+        print(f"Yield rate: {used_length * 100 / total_rod_length:.2f} [%]")
     else:
         print("Used_cuts not equal Required_cuts")
         print(q)
