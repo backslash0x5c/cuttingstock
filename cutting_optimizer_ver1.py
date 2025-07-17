@@ -1,6 +1,8 @@
 from read_csv import getPatterns
-import itertools
 import time
+
+# include available_rods size in the cut combo
+isSurplus = False
 
 def expand_required_cuts(required_dict):
     """
@@ -11,33 +13,77 @@ def expand_required_cuts(required_dict):
         expanded.extend([int(length)] * count)
     return expanded
 
+def find_all_unique_combinations(available_rods, required_cuts):
+    """
+    与えられた数列から和がavailable_rods以下となる全ての異なる組み合わせを求める
+    同じ和でも異なる組み合わせは保持し、完全に同じ組み合わせのみを重複排除
+    
+    Args:
+        available_rods: 原材料（この値以下の和を持つ組み合わせを探す）
+        required_cuts: 数値のリスト
+    
+    Returns:
+        異なる組み合わせのリスト [(組み合わせ, 和), ...]
+    """
+    # 重複を避けるためにsetを使用（tupleに変換してハッシュ化）
+    unique_combinations = set()
+    
+    def backtrack(index, current_subset, current_sum):
+        # 現在の和がavailable_rods以下の場合
+        if current_sum <= available_rods and current_sum > 0:
+            # 組み合わせをソートしてタプルに変換（重複判定のため）
+            sorted_subset = tuple(sorted(current_subset))
+            unique_combinations.add((sorted_subset, current_sum))
+        
+        # 現在の和がavailable_rodsを超えた場合、これ以上探索しない
+        if current_sum > available_rods or index >= len(required_cuts):
+            return
+        
+        # 現在の要素を含まない場合
+        backtrack(index + 1, current_subset, current_sum)
+        
+        # 現在の要素を含む場合
+        current_subset.append(required_cuts[index])
+        backtrack(index + 1, current_subset, current_sum + required_cuts[index])
+        current_subset.pop()  # バックトラック
+    
+    backtrack(0, [], 0)
+    
+    # setからリストに変換して返す
+    return [(list(combo), sum_val) for combo, sum_val in unique_combinations]
+
 def generate_all_combinations(available_rods, required_cuts):
     """
     指定された棒の長さから切り出し可能な全ての組み合わせを生成
     """
+    # 大きいAvailable_rodから小さいAvailable_rodのカットを許可
+    if isSurplus:
+        required_cuts.extend(available_rods)
+
+    # この長さの棒から切り出し可能な組み合わせを求める
+    combinations = find_all_unique_combinations(max(available_rods), required_cuts)
+    # 結果を和でソート
+    combinations.sort(key=lambda x: x[1])
+    # print(combinations)
+    # print(f"{len(combinations)} combinations")
+
+    # 小さいavailable_rodsからtotal_cut_lengthを切り出す
+    available_rods.sort()
+    i = 0
+
+    # カットパターンと歩留り率の辞書を追加
     all_combinations = []
-    # 大きいrodから小さいrodの切出しを考慮
-    # required_cuts.extend(available_rods)
-    
-    # 1本から最大可能本数まで全ての組み合わせを試す
-    for rod_length in available_rods:
-        combinations = set()
-        max_pieces = rod_length // min(required_cuts)
-
-        for num_pieces in range(1, max_pieces + 1):
-            for combo in itertools.combinations(required_cuts, num_pieces):
-                # if sum(combo) <= rod_length and not set(combo).issubset(set(available_rods)):
-                if sum(combo) <= rod_length:
-                    combinations.add(combo)
-
-        # カットパターンと歩留り率の辞書を追加
-        for combo in combinations:
-            loss = (rod_length - sum(combo)) / rod_length
-            all_combinations.append({
-                'rod_length': rod_length,
-                'cuts': tuple(combo),
-                'loss': loss,
-            })
+    for combo, total_cut_length in combinations:
+        if isSurplus and set(combo).issubset(set(available_rods)):
+            continue
+        while available_rods[i] < total_cut_length:
+            i += 1
+        loss = (available_rods[i] - total_cut_length) / available_rods[i]
+        all_combinations.append({
+            'rod_length': available_rods[i],
+            'cuts': tuple(combo),
+            'loss': loss,
+        })
     
     # ロス率の低い順にソート
     all_combinations.sort(key=lambda x: x['loss'], reverse=False)
@@ -90,7 +136,7 @@ def optimal_cutting_plan(c, a, q):
 
 if __name__ == "__main__":
     # 設定径: D10, D13, D19
-    diameter = 'D10'
+    diameter = 'D19'
     pattern = getPatterns(diameter)
     available_rods = pattern['base_patterns']
     required_cuts = pattern['tasks']
@@ -144,14 +190,14 @@ if __name__ == "__main__":
     
     if (used_count == q):
         # カットパターン探索時間
-        print(f"Time: {end - start:.4f} [s]")
+        print(f"Time:   {end - start:.4f} [s]")
         # 端材
-        print(f"Loss length: {total_rod_length - used_length} [mm]")
+        print(f"Loss:   {total_rod_length - used_length} [mm]")
         # 使用材の合計
-        print(f"Total rod length: {total_rod_length} [mm]")
+        print(f"Total:  {total_rod_length} [mm]")
         # 歩留り率
-        print(f"Yield rate: {used_length * 100 / total_rod_length:.2f} [%]")
+        print(f"Yield_rate: {used_length * 100 / total_rod_length:.2f} [%]")
     else:
         print("Used_cuts not equal Required_cuts")
-        print(q)
-        print(used_count)
+        print(f"Required_cuts:  {q}")
+        print(f"Used_cuts:      {used_count}")
