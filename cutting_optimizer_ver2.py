@@ -1,3 +1,8 @@
+"""
+NOT COMPLETED PROGRAM
+try to column-generation & branch-price methods
+"""
+
 from read_csv import getPatterns
 import itertools
 import time

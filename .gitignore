@@ -17,3 +17,6 @@ env/
 # OS依存ファイル
 .DS_Store
 Thumbs.db
+
+# report & slide
+report

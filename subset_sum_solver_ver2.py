@@ -1,5 +1,8 @@
-import time
+"""
+PROTOTYPE of find_all_unique_combinations in cutting_optimize_ver1.py
+"""
 
+import time
 
 # バックトラッキング法  
 def find_all_unique_combinations(available_rods, required_cuts):
