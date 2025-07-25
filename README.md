@@ -1,6 +1,6 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-English ver. -> CLAUDE.md
-Japanese.ver -> CLAUDE_ja.md
+- English ver. -> CLAUDE.md
+- Japanese.ver -> CLAUDE_ja.md
 
 ## Project Overview
 
