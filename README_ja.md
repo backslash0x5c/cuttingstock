@@ -1,5 +1,5 @@
 このファイルは、Claude Code (claude.ai/code) がこのリポジトリのコードを操作する際のガイダンスを提供します。
-- English ver. -> README.mc
+- English ver. -> README.md
 
 ## プロジェクト概要
 
