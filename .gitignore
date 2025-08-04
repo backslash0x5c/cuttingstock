@@ -1,22 +1,19 @@
-# ---- 基本的なPython関連 ----
-# Pythonが生成するキャッシュや一時ファイル
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# 【1】 最初に全ファイル禁止
+# すべてのファイルをignoreするがフォルダはしない
+# gitは空フォルダは無視されるので影響はない
+*
+!*/
 
-# pipでインストールされるパッケージ
-venv/
-env/
-.venv/
+# 【2】 次に任意のファイルやフォルダを許可
+!/result/cutting_result_*.csv
+!/read_xlsx.py
+!/cutting_optimizer_*.py
+!/subset_sum_solver_*.py
+# このファイルと同階層のファイルだけ許可
+!/README*.md
+!/.gitignore
 
-# ---- IDE & エディタの設定 ----
-# VS Code
-.vscode/
-
-# OS依存ファイル
+# 【3】 最後に常に除外するファイルやフォルダを禁止
+# OSが自動で作るファイル
 .DS_Store
 Thumbs.db
-
-# report & slide
-report/
