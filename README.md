@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a rebar cutting stock optimization system that solves the cutting stock problem for steel reinforcement bars (鉄筋). The system calculates optimal cutting patterns to minimize material waste when cutting rebars of various lengths from standard stock lengths.
+This is a rebar cutting stock optimization system that solves the cutting stock problem for steel reinforcement bars. The system calculates optimal cutting patterns to minimize material waste when cutting rebars of various lengths from standard stock lengths.
 
 ## Core Architecture
 
