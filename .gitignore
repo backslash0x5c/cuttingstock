@@ -1,19 +1,15 @@
-# 【1】 最初に全ファイル禁止
-# すべてのファイルをignoreするがフォルダはしない
-# gitは空フォルダは無視されるので影響はない
+# Whitelist ignore
 *
 !*/
 
-# 【2】 次に任意のファイルやフォルダを許可
+# allowed file/dir
+!/.gitignore
 !/result/cutting_result_*.csv
 !/read_xlsx.py
 !/cutting_optimizer_*.py
 !/subset_sum_solver_*.py
-# このファイルと同階層のファイルだけ許可
 !/README*.md
-!/.gitignore
 
-# 【3】 最後に常に除外するファイルやフォルダを禁止
-# OSが自動で作るファイル
+# disallowed
 .DS_Store
 Thumbs.db
