@@ -150,10 +150,10 @@ def optimal_cutting_plan(c, a, q):
 
 def main():
     # 設定径: D10, D13, D16, D19, D22
-    diameter = 'D16'
+    diameter = 'D10'
     
     # Excelファイルから集約済みデータを取得
-    pattern = get_patterns_from_xlsx("切断集計表.xlsx", diameter)
+    pattern = get_patterns_from_xlsx("required_cuts.xlsx", diameter)
     available_rods = pattern['base_patterns']
     required_cuts = pattern['tasks']
 

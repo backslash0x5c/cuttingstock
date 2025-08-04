@@ -35,6 +35,12 @@ BASE_PATTERNS = {
 
 ## Common Development Tasks
 
+### Required libraries
+- `streamlit`: Web interface
+- `pulp`: Integer linear programming solver
+- `openpyxl`: Excel file processing
+- `pandas`: Data processing
+
 ### Running the Streamlit Application
 ```bash
 streamlit run cutting_optimizer_streamlit.py
@@ -75,7 +81,7 @@ The system reads cutting requirements from Excel files with the following struct
 - `cutting_optimizer_ver2.py` → command-line optimizer with Excel integration
 - `subset_sum_solver_ver3.py` → standalone DFS combination generator
 - `read_xlsx.py` → Excel file parser with multi-sheet support
-- Excel files: <!-- `切断集計表.xlsx`, `切断集計表2.xlsx` --> → input data
+- Excel files: `required_cuts.xlsx` → input data
 
 ## Testing
 

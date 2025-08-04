@@ -37,6 +37,12 @@ BASE_PATTERNS = {
 
 ## 使用方法
 
+### 必要なライブラリ
+- `streamlit`: ウェブインターフェース
+- `pulp`: 整数線形計画法ソルバー
+- `openpyxl`: Excelファイル処理
+- `pandas`: データ処理
+
 ### Streamlitアプリケーションの実行
 ```bash
 streamlit run cutting_optimizer_streamlit.py
@@ -77,15 +83,8 @@ main関数内の`diameter`変数を変更してください（通常'D10', 'D13'
 - `cutting_optimizer_ver2.py` → Excel統合付きコマンドライン最適化器
 - `subset_sum_solver_ver3.py` → スタンドアロンDFS組み合わせ生成器
 - `read_xlsx.py` → マルチシート対応Excelファイルパーサー
-- Excelファイル: <!-- `切断集計表.xlsx`, `切断集計表2.xlsx` --> → 入力データ
+- Excelファイル: `required_cuts.xlsx` → 入力データ
 
 ## テスト
 
 システムには`result/`ディレクトリに、異なる鉄筋径での最適化結果の検証と比較のためのサンプル結果ファイルが含まれています。
-
-## 必要なライブラリ
-
-- `streamlit`: ウェブインターフェース
-- `pulp`: 整数線形計画法ソルバー
-- `openpyxl`: Excelファイル処理
-- `pandas`: データ処理
