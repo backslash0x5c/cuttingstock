@@ -7,10 +7,8 @@
 !/result/required_cuts/*
 !/read_xlsx.py
 !/cutting_optimizer_*.py
-!/subset_sum_solver_*.py
 !/README*.md
 !/required_cuts.xlsx
-
 # ignore old ver
 cutting_optimizer_ver1.py
 

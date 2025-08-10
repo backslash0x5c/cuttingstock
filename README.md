@@ -9,9 +9,8 @@ This is a rebar cutting stock optimization system that solves the cutting stock 
 ### Main Components
 
 1. **Cutting Optimizers** (`cutting_optimizer_ver2.py`): Solve the cutting stock problem using integer linear programming
-2. **Subset Sum Solvers** (`subset_sum_solver_ver3.py`): Generate all possible cutting combinations using depth-first search
-3. **Data Readers** (`read_xlsx.py`): Parse Excel files containing cutting requirements
-4. **Web Interface** (`cutting_optimizer_streamlit.py`): Streamlit-based user interface
+2. **Data Readers** (`read_xlsx.py`): Parse Excel files containing cutting requirements
+3. **Web Interface** (`cutting_optimizer_streamlit.py`): Streamlit-based user interface
 
 ### Key Algorithms
 
@@ -27,7 +26,7 @@ The system supports five rebar diameters with predefined available stock lengths
 BASE_PATTERNS = {
     'D10': [4000, 4500, 5500, 6000],
     'D13': [3000, 4000, 4500, 5500, 6000, 7500],
-    'D16': [3000, 4000, 4500, 5500, 6000, 7000],
+    'D16': [4000, 4500, 5500, 6000, 7000],
     'D19': [3500, 4000, 4500, 5500, 6000],
     'D22': [4000, 4500, 5500, 6000]
 }
@@ -79,7 +78,6 @@ The system reads cutting requirements from Excel files with the following struct
 
 - `cutting_optimizer_streamlit.py` → main web interface
 - `cutting_optimizer_ver2.py` → command-line optimizer with Excel integration
-- `subset_sum_solver_ver3.py` → standalone DFS combination generator
 - `read_xlsx.py` → Excel file parser with multi-sheet support
 - Excel files: `required_cuts.xlsx` → input data
 

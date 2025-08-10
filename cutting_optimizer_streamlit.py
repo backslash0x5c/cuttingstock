@@ -10,7 +10,7 @@ from collections import defaultdict
 BASE_PATTERNS = {
     'D10': [4000, 4500, 5500, 6000],
     'D13': [3000, 4000, 4500, 5500, 6000, 7500],
-    'D16': [3000, 4000, 4500, 5500, 6000, 7000],
+    'D16': [4000, 4500, 5500, 6000, 7000],
     'D19': [3500, 4000, 4500, 5500, 6000],
     'D22': [4000, 4500, 5500, 6000]
 }
@@ -101,7 +101,7 @@ def read_cutting_data_from_xlsx(uploaded_file, target_diameter):
 def dfs(index, current_combination, current_sum, remaining_counts, sorted_numbers, max_sum, all_combinations):
     """深さ優先探索の再帰関数"""
     if 0 < current_sum <= max_sum:
-        sorted_combo = tuple(sorted(current_combination))
+        sorted_combo = tuple(sorted(current_combination, reverse=True))
         all_combinations.add((sorted_combo, current_sum))
     
     if current_sum > max_sum or index >= len(sorted_numbers):
@@ -150,7 +150,8 @@ def generate_all_combinations(available_rods, required_cuts):
             'loss': loss,
         })
     
-    all_combinations.sort(key=lambda x: x['loss'], reverse=False)
+    all_combinations.sort(key=lambda x: x['cuts'], reverse=True)
+    all_combinations.sort(key=lambda x: x['rod_length'], reverse=False)
     return all_combinations
 
 def optimal_cutting_plan(c, a, q, time_limit=60):
@@ -183,10 +184,10 @@ def display_cutting_patterns(cutting_patterns):
         st.write("切断パターンがありません")
         return
     
-    st.write("**切断パターン詳細:**")
+    st.write("**最適切断指示:**")
     for i, pattern in enumerate(cutting_patterns):
         cuts_str = " + ".join([str(cut) for cut in pattern['cuts']])
-        st.write(f"• **{i+1}本目:** {pattern['rod_length']}mm → [{cuts_str}] (端材: {pattern['waste']}mm)")
+        st.write(f"**{i+1}:** {pattern['rod_length']}mm → ({cuts_str}) [{pattern['loss']}] * {pattern['num']}")
 
 def main():
     st.set_page_config(page_title="鉄筋切断最適化アプリ", layout="wide")
@@ -213,7 +214,7 @@ def main():
                     st.write(f"**制限時間:** {record.get('time_limit', 60)} s")
                     st.write(f"**組み合わせ数:** {record['combinations_count']:,}")
                     
-                    # 必要な切り出し長さを表示
+                    # 必要な切り出しを表示
                     st.write("**必要な切り出し:**")
                     for length, count in sorted(record['required_cuts'].items(), reverse=True):
                         st.write(f"• {length}mm × {count}本")
@@ -236,7 +237,7 @@ def main():
         
         # 径の選択
         diameter = st.selectbox(
-            "鉄筋の径を選択してください:",
+            "鉄筋径を選択してください:",
             options=list(BASE_PATTERNS.keys())
         )
         
@@ -246,9 +247,9 @@ def main():
         # 最適化オプション
         with st.expander("⚙️ 最適化オプション"):
             time_limit = st.number_input(
-                "最適化の制限時間 (秒)",
+                "最適化の制限時間 (10~3600 秒)",
                 min_value=10,
-                max_value=600,
+                max_value=3600,
                 value=60,
                 step=10,
                 help="最適化計算の制限時間を設定します。大きな問題では時間を長く設定することを推奨します。"
@@ -362,7 +363,7 @@ def main():
                 all_combinations = generate_all_combinations(available_rods, required_cuts)
                 combinations_count = len(all_combinations)
                 
-                st.write(f"**生成された組み合わせ数:** {combinations_count:,}")
+                st.write(f"**切断パターン組み合わせ:** {combinations_count:,}")
                 
                 if not all_combinations:
                     st.error("有効な組み合わせが見つかりませんでした。")
@@ -381,26 +382,23 @@ def main():
                     processing_time = end_time - start_time
                     
                     if optimal_solution is not None:
-                        # 結果の計算
                         total_rod_length = 0
                         used_length = 0
                         used_list = []
                         cutting_patterns = []
                         
-                        k = 1
                         for i in range(len(all_combinations)):
-                            j = int(optimal_solution[i])
-                            for _ in range(j):
+                            if int(optimal_solution[i]) > 0:
                                 pattern = {
                                     'rod_length': all_combinations[i]['rod_length'],
                                     'cuts': all_combinations[i]['cuts'],
-                                    'waste': all_combinations[i]['rod_length'] - sum(all_combinations[i]['cuts'])
+                                    'loss': all_combinations[i]['rod_length'] - sum(all_combinations[i]['cuts']),
+                                    'num': int(optimal_solution[i])
                                 }
                                 cutting_patterns.append(pattern)
-                                total_rod_length += all_combinations[i]['rod_length']
-                                used_length += sum(all_combinations[i]['cuts'])
-                                used_list.extend(all_combinations[i]['cuts'])
-                                k += 1
+                                total_rod_length += all_combinations[i]['rod_length'] * int(optimal_solution[i])
+                                used_length += sum(all_combinations[i]['cuts']) * int(optimal_solution[i])
+                                used_list.extend(all_combinations[i]['cuts'] * int(optimal_solution[i]))
                         
                         # 検証
                         used_count = [used_list.count(i) for i in l]
@@ -413,45 +411,31 @@ def main():
                             st.success("最適化が完了しました！")
                             
                             # サマリー表示
-                            col_summary1, col_summary2, col_summary3 = st.columns([1, 1, 1])
+                            col_summary1, col_summary2 = st.columns([1, 1])
                             
                             with col_summary1:
                                 st.metric("歩留り率", f"{yield_rate:.2f}%")
-                                st.metric("使用棒数", f"{len(cutting_patterns)}本")
-                            
-                            with col_summary2:
-                                st.metric("総材料長", f"{total_rod_length:,} mm")
                                 st.metric("処理時間", f"{processing_time:.4f} s")
                             
-                            with col_summary3:
+                            with col_summary2:
                                 st.metric("端材", f"{loss:,} mm")
-                                st.metric("組み合わせ数", f"{combinations_count:,}")
-                            
+                                st.metric("総材料長", f"{total_rod_length:,} mm")
+                                
                             # 切断パターンの表示
                             st.subheader("切断パターン")
                             
                             df_results = pd.DataFrame([
                                 {
-                                    'No.': i + 1,
-                                    '棒の長さ (mm)': pattern['rod_length'],
-                                    '切断パターン': ' + '.join(map(str, pattern['cuts'])),
-                                    '端材 (mm)': pattern['waste']
+                                    'Index': i + 1,
+                                    'Rod_length(mm)': pattern['rod_length'],
+                                    'Cutting_pattern': ','.join(map(str, pattern['cuts'])),
+                                    'Loss(mm)': pattern['loss'],
+                                    'Num': pattern['num']
                                 }
                                 for i, pattern in enumerate(cutting_patterns)
                             ])
                             
                             st.dataframe(df_results, use_container_width=True)
-                            
-                            # 詳細な切断指示
-                            with st.expander("詳細な切断指示を表示"):
-                                st.subheader("切断指示詳細")
-                                total_pieces_required = sum(required_cuts.values())
-                                cutting_types_count = len(required_cuts)
-                                st.write(f"**切断種類数:** {cutting_types_count}")
-                                st.write(f"**総切断本数:** {total_pieces_required}")
-                                
-                                for length, count in sorted(required_cuts.items(), reverse=True):
-                                    st.write(f"• {length}mm × {count}本")
                             
                             # 履歴に追加
                             history_record = {
@@ -473,7 +457,7 @@ def main():
                             st.download_button(
                                 label="結果をCSVでダウンロード",
                                 data=csv_data,
-                                file_name=f"cutting_result_{diameter}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                file_name=f"result_{diameter}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                                 mime='text/csv'
                             )
                         else:

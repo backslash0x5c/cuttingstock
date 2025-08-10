@@ -20,7 +20,7 @@ def dfs(index, current_combination, current_sum, remaining_counts, sorted_number
     # 現在の組み合わせが有効な場合（合計値が0より大きく、max_sum以下）
     if 0 < current_sum <= max_sum:
         # 組み合わせをソートしてタプルに変換（重複判定のため）
-        sorted_combo = tuple(sorted(current_combination))
+        sorted_combo = tuple(sorted(current_combination, reverse=True))
         all_combinations.add((sorted_combo, current_sum))
     
     # 合計値がmax_sumを超えた場合、または全ての整数を処理した場合は終了
@@ -100,8 +100,9 @@ def generate_all_combinations(available_rods, required_cuts):
             'loss': loss,
         })
     
-    # ロス率の低い順にソート
-    all_combinations.sort(key=lambda x: x['loss'], reverse=False)
+    # available_rods毎に、カットパターンの降順にソート
+    all_combinations.sort(key=lambda x: x['cuts'], reverse=True)
+    all_combinations.sort(key=lambda x: x['rod_length'], reverse=False)
 
     # 結果表示（最初の20通り）
     # for i, combo in enumerate(all_combinations[:20]):
@@ -138,7 +139,7 @@ def optimal_cutting_plan(c, a, q):
         prob += production_constraint == q[i], f"Demand_constraint_{i+1}"
 
     # 問題を解く、timeLimitを設定
-    prob.solve(pulp.PULP_CBC_CMD(timeLimit=180, msg=False))
+    prob.solve(pulp.PULP_CBC_CMD(timeLimit=60, msg=False))
     # 結果の表示    
     if prob.status == pulp.LpStatusOptimal:
         optimal_solution = [var.varValue for var in x]
@@ -170,8 +171,8 @@ def main():
     all_combinations = generate_all_combinations(available_rods, required_cuts)
     end = time.perf_counter()
     time1 = end - start
-    print(f"{len(all_combinations)} [combinations]")
-    print(f"gen_patterns: {time1:.4f} [s]")
+    print(f"cut_patterns: {len(all_combinations)} [combinations]")
+    print(f"cut_patterns: {time1:.4f} [s]")
 
     # 最適化問題用に変数を定義
     a = []
@@ -200,14 +201,12 @@ def main():
     used_length = 0
     used_list = []
     for i in range(len(all_combinations)):
-        j = optimal_solution[i]
-        while(j > 0):
-            print(f"{k:3d}. {all_combinations[i]['rod_length']} = {all_combinations[i]['cuts']} [{all_combinations[i]['rod_length']-sum(all_combinations[i]['cuts'])}]")
-            total_rod_length += all_combinations[i]['rod_length']
-            used_length += sum(all_combinations[i]['cuts'])
-            used_list.extend(all_combinations[i]['cuts'])
+        if int(optimal_solution[i]) > 0:
+            print(f"{k:3d}. {all_combinations[i]['rod_length']} = {all_combinations[i]['cuts']} [{all_combinations[i]['rod_length'] - sum(all_combinations[i]['cuts'])}] * {int(optimal_solution[i])}")
+            total_rod_length += all_combinations[i]['rod_length'] * int(optimal_solution[i])
+            used_length += sum(all_combinations[i]['cuts']) * int(optimal_solution[i])
+            used_list.extend(all_combinations[i]['cuts'] * int(optimal_solution[i]))
             k += 1
-            j -= 1
     print()
 
     # 要求本数と解の切り出し個数が同じかチェック
@@ -222,15 +221,6 @@ def main():
         print(f"Total:  {total_rod_length} [mm]")
         # 歩留り率
         print(f"Rate: {used_length * 100 / total_rod_length:.2f} [%]")
-        
-        # 切断指示の詳細表示
-        print(f"\n=== 切断指示詳細 ===")
-        total_pieces = sum(required_cuts.values())
-        cutting_types = len(required_cuts)
-        print(f"切断種類数: {cutting_types}")
-        print(f"総切断本数: {total_pieces}")
-        for length, count in sorted(required_cuts.items(), reverse=True):
-            print(f"  {length}mm × {count}本")
     else:
         print("Used_cuts not equal Required_cuts")
         print(f"Required_cuts:  {q}")
