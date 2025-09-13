@@ -4,14 +4,16 @@
 
 # allowed file/dir
 !/.gitignore
-!/result/required_cuts/*
-!/read_xlsx.py
-!/cutting_optimizer_*.py
 !/README*.md
+# Input file
 !/required_cuts.xlsx
+# Python program
+!/read_xlsx.py
+!/cutting_optimizer_ver2.py
 !/result_sheet.py
-# ignore old ver
-cutting_optimizer_ver1.py
+!/cutting_optimizer_streamlit.py
+# Sample Output file
+!/result/required_cuts/*
 
 # disallowed
 .DS_Store
