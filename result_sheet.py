@@ -80,7 +80,7 @@ count_df = pd.concat([count_df, pd.DataFrame([cutting_total_row])], ignore_index
 # print()
 
 # 切断集計表からのデータ処理を追加
-file_path = '切断集計表.xlsx'
+file_path = 'required_cuts.xlsx'
 
 # エクセルファイルを開く
 workbook = openpyxl.load_workbook(file_path, data_only=True)

@@ -185,7 +185,7 @@ def main(diameter):
     """
     メイン処理（テスト用）
     """
-    file_path = '切断集計表.xlsx'
+    file_path = 'required_cuts.xlsx'
     
     # テスト用：鉄筋径リスト
     # diameters = ['D10', 'D13', 'D16', 'D19', 'D22']
