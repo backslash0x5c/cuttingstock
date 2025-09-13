@@ -30,7 +30,6 @@ Modify the `diameter` variable in the main functions (typically 'D10', 'D13', 'D
 1. **Optimizers**:
    - `cutting_optimizer_streamlit.py`: Main web interface with integrated optimization
    - `cutting_optimizer_ver2.py`: Command-line version with Excel integration
-   - `cutting_optimizer_dual.py`: Experimental column generation approach (incomplete)
 
 2. **Data Processing**:
    - `read_xlsx.py`: Excel parser for cutting requirements with multi-sheet support
@@ -40,7 +39,6 @@ Modify the `diameter` variable in the main functions (typically 'D10', 'D13', 'D
 
 - **Depth-First Search (DFS)**: Generates all valid cutting combinations within material constraints using recursive exploration
 - **Integer Linear Programming (ILP)**: Optimizes cutting patterns using PuLP library to minimize waste
-- **Column Generation**: Experimental approach in dual version (incomplete implementation)
 
 ### Rebar Specifications
 
