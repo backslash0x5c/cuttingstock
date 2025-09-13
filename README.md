@@ -1,5 +1,3 @@
-# CLAUDE.md
-
 ## Project Overview
 
 This is a rebar cutting stock optimization system that solves the cutting stock problem for steel reinforcement bars using depth-first search algorithms and integer linear programming.
