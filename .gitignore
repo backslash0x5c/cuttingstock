@@ -9,6 +9,7 @@
 !/cutting_optimizer_*.py
 !/README*.md
 !/required_cuts.xlsx
+!/result_sheet.py
 # ignore old ver
 cutting_optimizer_ver1.py
 

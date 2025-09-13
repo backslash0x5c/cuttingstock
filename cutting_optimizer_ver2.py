@@ -139,7 +139,7 @@ def optimal_cutting_plan(c, a, q):
         prob += production_constraint == q[i], f"Demand_constraint_{i+1}"
 
     # 問題を解く、timeLimitを設定
-    prob.solve(pulp.PULP_CBC_CMD(timeLimit=60, msg=False))
+    prob.solve(pulp.PULP_CBC_CMD(timeLimit=120, msg=False))
     # 結果の表示    
     if prob.status == pulp.LpStatusOptimal:
         optimal_solution = [var.varValue for var in x]
@@ -151,7 +151,7 @@ def optimal_cutting_plan(c, a, q):
 
 def main():
     # 設定径: D10, D13, D16, D19, D22
-    diameter = 'D10'
+    diameter = 'D22'
     
     # Excelファイルから集約済みデータを取得
     pattern = get_patterns_from_xlsx("required_cuts.xlsx", diameter)

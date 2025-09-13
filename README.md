@@ -1,26 +1,52 @@
-# Cutting Stock Optimization System
+# CLAUDE.md
 
 ## Project Overview
 
-This is a rebar cutting stock optimization system that solves the cutting stock problem for steel reinforcement bars. The system calculates optimal cutting patterns to minimize material waste when cutting rebars of various lengths from standard stock lengths.
+This is a rebar cutting stock optimization system that solves the cutting stock problem for steel reinforcement bars using depth-first search algorithms and integer linear programming.
 
-## Core Architecture
+## Commands
 
-### Main Components
+### Running the Application
+```bash
+# Run the Streamlit web interface
+streamlit run cutting_optimizer_streamlit.py
 
-1. **Cutting Optimizers** (`cutting_optimizer_ver2.py`): Solve the cutting stock problem using integer linear programming
-2. **Data Readers** (`read_xlsx.py`): Parse Excel files containing cutting requirements
-3. **Web Interface** (`cutting_optimizer_streamlit.py`): Streamlit-based user interface
+# Run command-line optimizer
+python cutting_optimizer_ver2.py
+```
+
+### Dependencies
+The system requires these Python packages:
+- `streamlit`: Web interface
+- `pulp`: Integer linear programming solver
+- `openpyxl`: Excel file processing
+- `pandas`: Data processing
+
+### Testing with Different Diameters
+Modify the `diameter` variable in the main functions (typically 'D10', 'D13', 'D16', 'D19', 'D22').
+
+## Architecture
+
+### Core Components
+
+1. **Optimizers**:
+   - `cutting_optimizer_streamlit.py`: Main web interface with integrated optimization
+   - `cutting_optimizer_ver2.py`: Command-line version with Excel integration
+   - `cutting_optimizer_dual.py`: Experimental column generation approach (incomplete)
+
+2. **Data Processing**:
+   - `read_xlsx.py`: Excel parser for cutting requirements with multi-sheet support
+   - `result_sheet.py`: Results output to Excel format
 
 ### Key Algorithms
 
-- **Depth-First Search (DFS)**: Used to generate all valid cutting combinations within material constraints
-- **Integer Linear Programming (ILP)**: Optimizes cutting patterns to minimize waste using PuLP library
-- **Column Generation**: Experimental approach in `cutting_optimizer_dual.py` (incomplete)
+- **Depth-First Search (DFS)**: Generates all valid cutting combinations within material constraints using recursive exploration
+- **Integer Linear Programming (ILP)**: Optimizes cutting patterns using PuLP library to minimize waste
+- **Column Generation**: Experimental approach in dual version (incomplete implementation)
 
-## Standard Rebar Specifications
+### Rebar Specifications
 
-The system supports five rebar diameters with predefined available stock lengths:
+The system supports five standard rebar diameters with predefined stock lengths:
 
 ```python
 BASE_PATTERNS = {
@@ -32,55 +58,22 @@ BASE_PATTERNS = {
 }
 ```
 
-## Common Development Tasks
+### Data Flow
 
-### Required libraries
-- `streamlit`: Web interface
-- `pulp`: Integer linear programming solver
-- `openpyxl`: Excel file processing
-- `pandas`: Data processing
+1. **Input**: Excel files with cutting requirements (`required_cuts.xlsx`)
+2. **Processing**: Extract rebar diameter data using `find_cell_position()` and `get_diameter_column_index()`
+3. **Combination Generation**: Use DFS to find valid cutting patterns within stock constraints
+4. **Optimization**: Solve ILP problem with 120-second timeout to minimize waste
+5. **Output**: Display cutting instructions with yield rates and material usage statistics
 
-### Running the Streamlit Application
-```bash
-streamlit run cutting_optimizer_streamlit.py
-```
+### File Structure
 
-### Running Command-Line Optimizers
-```bash
-python cutting_optimizer_ver2.py
-```
+- **Input files**: Excel files with "鉄筋径" (rebar diameter) headers
+- **Result files**: Located in `result/` directory with processing results and comparisons
 
-### Testing with Different Diameters
-Modify the `diameter` variable in the main functions (typically 'D10', 'D13', 'D16', 'D19', 'D22').
+### Performance Considerations
 
-## Data Input Formats
-
-### Excel Files
-The system reads cutting requirements from Excel files with the following structure:
-- Sheet contains "鉄筋径" (rebar diameter) headers
-- Length values in mm in the first data column
-- Quantity values in corresponding diameter columns
-
-## Algorithm Flow
-
-1. **Data Input**: Read cutting requirements from Excel
-2. **Combination Generation**: Use DFS to find all valid cutting patterns within stock length constraints
-3. **Optimization**: Solve ILP to minimize total waste while meeting demand
-4. **Output**: Display cutting instructions with waste calculations
-
-## Performance Considerations
-
-- Combination generation can be computationally expensive for large problems
-- Default optimization timeout is 60 seconds
-- Results include processing time, yield rate, and total material usage statistics
-
-## File Dependencies
-
-- `cutting_optimizer_streamlit.py` → main web interface
-- `cutting_optimizer_ver2.py` → command-line optimizer with Excel integration
-- `read_xlsx.py` → Excel file parser with multi-sheet support
-- Excel files: `required_cuts.xlsx` → input data
-
-## Testing
-
-The system includes sample result files in the `result/` directory for validation and comparison of optimization results across different rebar diameters.
+- Combination generation is computationally expensive for large problems
+- Default optimization timeout: 120 seconds
+- Results include processing time and yield rate calculations
+- DFS uses pruning to avoid exploring invalid branches when current_sum > max_sum
