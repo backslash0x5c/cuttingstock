@@ -670,7 +670,9 @@ def main():
 
                                         # 差分のヘッダーを設定
                                         ws_summary['A9'] = '長さ(mm)'
-                                        ws_summary['B9'] = '差分'
+                                        ws_summary["B9"] = "出力結果"
+                                        ws_summary["C9"] = "切断指示"
+                                        ws_summary["D9"] = "差分"
 
                                         # 差分の数式を設定
                                         row_num = 10
@@ -679,7 +681,9 @@ def main():
                                             col_letter_output = openpyxl.utils.get_column_letter(i+2)   # 出力結果集計表のB列から開始
 
                                             ws_summary[f'A{row_num}'] = str(value)
-                                            ws_summary[f'B{row_num}'] = f'=出力結果集計表!{col_letter_output}{ws_output.max_row}-切断指示集計表!{col_letter_cutting}{ws_cutting.max_row}'
+                                            ws_summary[f'B{row_num}'] = f'=出力結果集計表!{col_letter_output}{ws_output.max_row}'
+                                            ws_summary[f'C{row_num}'] = f'=切断指示集計表!{col_letter_cutting}{ws_cutting.max_row}'
+                                            ws_summary[f'D{row_num}'] = f'=B{row_num}-C{row_num}'
                                             row_num += 1
 
                                 # 修正されたExcelファイルを保存
