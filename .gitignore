@@ -11,7 +11,7 @@
 !/read_xlsx.py
 !/cutting_optimizer_ver2.py
 !/result_sheet.py
-!/cutting_optimizer_streamlit.py
+!/cutting_optimizer_streamlit*
 # Sample Output file
 !/result/required_cuts/*
 
