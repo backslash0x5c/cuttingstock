@@ -140,13 +140,13 @@ def create_result_sheets(df_results, target_diameter, uploaded_file=None):
     # カウント結果をDataFrameに変換
     count_df = pd.DataFrame(count_data)
 
-    # 合計行は空行として追加（後でExcel関数を設定）
+    # 合計行は空行として追加(後でExcel関数を設定)
     cutting_total_row = {'id': '合計'}
     for value in unique_values:
         cutting_total_row[str(value)] = None  # Excelでの数式設定用
     count_df = pd.concat([count_df, pd.DataFrame([cutting_total_row])], ignore_index=True)
 
-    # 切断集計表データの処理（アップロードされたファイルがある場合）
+    # 切断集計表データの処理(アップロードされたファイルがある場合)
     cutting_count_df = None
     sheet_cutting_data_all = None
     cutting_unique_values = None
@@ -191,7 +191,7 @@ def create_result_sheets(df_results, target_diameter, uploaded_file=None):
                 # 切断集計表のカウント結果をDataFrameに変換
                 cutting_count_df = pd.DataFrame(cutting_count_data)
                 
-                # 切断集計表カウント表に合計行を追加（後でExcel関数を設定）
+                # 切断集計表カウント表に合計行を追加(後でExcel関数を設定)
                 project_total_row = {'シート名': '合計'}
                 for value in cutting_unique_values:
                     project_total_row[str(value)] = None  # Excelでの数式設定用
@@ -369,8 +369,8 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                 yield_rate = used_length * 100 / total_rod_length
 
                 # 端材を閾値で分類
-                scrap_below_threshold = 0  # 閾値未満の端材（廃材）
-                scrap_above_threshold = []  # 閾値以上の端材（再利用可能）
+                scrap_below_threshold = 0  # 閾値未満の端材(廃材)
+                scrap_above_threshold = []  # 閾値以上の端材(再利用可能)
 
                 for pattern in cutting_patterns:
                     pattern_loss = pattern['loss']
@@ -398,17 +398,17 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                 col_summary1, col_summary2, col_summary3 = st.columns([1, 1, 1])
 
                 with col_summary1:
-                    st.metric("歩留り率（従来）", f"{yield_rate:.2f}%")
                     st.metric("処理時間", f"{processing_time:.4f} s")
-
-                with col_summary2:
-                    st.metric("端材（全体）", f"{loss:,} mm")
                     st.metric("総材料長", f"{total_rod_length:,} mm")
 
+                with col_summary2:
+                    st.metric("歩留り率(再利用なし)", f"{yield_rate:.2f}%")
+                    st.metric("端材(再利用なし)", f"{loss:,} mm")
+
                 with col_summary3:
-                    st.metric("歩留り率（閾値適用）", f"{yield_rate_with_threshold:.2f}%",
+                    st.metric("歩留り率(再利用あり)", f"{yield_rate_with_threshold:.2f}%",
                              delta=f"{yield_rate_with_threshold - yield_rate:.2f}%")
-                    st.metric("廃材（<{0}mm）".format(scrap_threshold), f"{scrap_below_threshold:,} mm")
+                    st.metric("端材(再利用あり)", f"{scrap_below_threshold:,} mm")
 
                 # 切断パターンの表示
                 st.write("切断パターン")
@@ -426,7 +426,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
 
                 st.dataframe(df_results, use_container_width=True)
 
-                # 結果シート作成（表示用）
+                # 結果シート作成(表示用)
                 expanded_df, count_df, cutting_count_df, _, _ = create_result_sheets(
                     df_results, diameter, uploaded_file if input_method == "XLSXファイルアップロード" else None
                 )
@@ -469,7 +469,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                             key=f"{available_rods}_reuse_list",
                         )
                     else:
-                        st.info(f"再利用可能な端材（≥{scrap_threshold}mm）はありません")
+                        st.info(f"再利用可能な端材(≥{scrap_threshold}mm)はありません")
 
                 with col_download2:
                     # Excelダウンロード
@@ -487,7 +487,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                         # 切断種類のカウント結果を2番目のシートに保存
                         count_df.to_excel(writer, sheet_name='出力結果集計表', index=False)
 
-                        # 切断集計表のカウント結果を3番目のシートに保存（データがある場合）
+                        # 切断集計表のカウント結果を3番目のシートに保存(データがある場合)
                         if cutting_count_df is not None:
                             cutting_count_df.to_excel(writer, sheet_name='切断指示集計表', index=False)
 
@@ -500,7 +500,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                         ws_output = workbook['出力結果集計表']
                         last_row = ws_output.max_row
 
-                        # 合計行の数式を設定（B列から最後の列まで）
+                        # 合計行の数式を設定(B列から最後の列まで)
                         for col in range(2, ws_output.max_column + 1):
                             col_letter = openpyxl.utils.get_column_letter(col)
                             ws_output[f'{col_letter}{last_row}'] = f'=SUM({col_letter}2:{col_letter}{last_row-1})'
@@ -510,7 +510,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                         ws_cutting = workbook['切断指示集計表']
                         last_row = ws_cutting.max_row
 
-                        # 合計行の数式を設定（B列から最後の列まで）
+                        # 合計行の数式を設定(B列から最後の列まで)
                         for col in range(2, ws_cutting.max_column + 1):
                             col_letter = openpyxl.utils.get_column_letter(col)
                             ws_cutting[f'{col_letter}{last_row}'] = f'=SUM({col_letter}2:{col_letter}{last_row-1})'
@@ -518,41 +518,50 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                         # サマリーシートを作成
                         ws_summary = workbook.create_sheet('サマリー')
 
-                        # ws_summary['A1'] = '項目'
-                        # ws_summary['B1'] = '値'
+                        ws_summary['A1'] = '径'
+                        ws_summary['B1'] = diameter
 
-                        ws_summary['A2'] = '径'
-                        ws_summary['B2'] = diameter
+                        ws_summary["A2"] = "歩留り率(再利用なし)"
+                        ws_summary['B2'] = yield_rate
+                        ws_summary['B2'].number_format = '0.00%'
+                        ws_summary["B2"].value = yield_rate / 100
 
-                        ws_summary['A3'] = '歩留り率'
-                        ws_summary['B3'] = yield_rate
-                        ws_summary['B3'].number_format = '0.00%'
-                        ws_summary["B3"].value = yield_rate / 100
+                        ws_summary["A3"] = "端材(再利用なし)[mm]"
+                        ws_summary["B3"] = loss
+                        ws_summary["B3"].number_format = "#,##0"
 
-                        ws_summary['A4'] = '総長(mm)'
-                        ws_summary['B4'] = total_rod_length
-                        ws_summary['B4'].number_format = '#,##0'
+                        ws_summary["A4"] = "端材閾値"
+                        ws_summary["B4"] = scrap_threshold
 
-                        ws_summary['A5'] = '端材(mm)'
-                        ws_summary['B5'] = loss
-                        ws_summary['B5'].number_format = '#,##0'
+                        ws_summary["A5"] = "歩留り率(再利用あり)"
+                        ws_summary["B5"] = yield_rate_with_threshold
+                        ws_summary["B5"].number_format = "0.00%"
+                        ws_summary["B5"].value = yield_rate_with_threshold / 100
 
-                        ws_summary["A6"] = "処理時間(s)"
-                        ws_summary["B6"] = processing_time
-                        ws_summary["B6"].number_format = "#,##0.00"
+                        ws_summary["A6"] = "端材(再利用あり)[mm]"
+                        ws_summary["B6"] = scrap_below_threshold
+                        ws_summary["B6"].number_format = "#,##0"
+
+                        ws_summary['A7'] = '総材料長'
+                        ws_summary['B7'] = total_rod_length
+                        ws_summary['B7'].number_format = '#,##0'
+
+                        ws_summary["A8"] = "処理時間(s)"
+                        ws_summary["B8"] = processing_time
+                        ws_summary["B8"].number_format = "#,##0.00"
 
                         # 切断指示集計表がある場合
                         if cutting_unique_values:
-                            ws_summary['A8'] = '差分（出力結果 - 切断指示）'
+                            ws_summary['A10'] = '差分(出力結果 - 切断指示)'
 
                             # 差分のヘッダーを設定
-                            ws_summary['A9'] = '長さ(mm)'
-                            ws_summary["B9"] = "出力結果"
-                            ws_summary["C9"] = "切断指示"
-                            ws_summary["D9"] = "差分"
+                            ws_summary['A11'] = '長さ(mm)'
+                            ws_summary["B11"] = "出力結果"
+                            ws_summary["C11"] = "切断指示"
+                            ws_summary["D11"] = "差分"
 
                             # 差分の数式を設定
-                            row_num = 10
+                            row_num = 12
                             for i, value in enumerate(cutting_unique_values):
                                 col_letter_cutting = openpyxl.utils.get_column_letter(i+2)  # 切断指示集計表のB列から開始
                                 col_letter_output = openpyxl.utils.get_column_letter(i+2)   # 出力結果集計表のB列から開始
@@ -587,7 +596,7 @@ def main():
     st.set_page_config(page_title="鉄筋切断最適化アプリ", layout="wide")
 
     st.title("🔧 鉄筋切断最適化アプリ")
-    st.write("鉄筋の切断パターンを最適化し、材料の無駄を最小化します。")
+    st.write("鉄筋の切断パターンを最適化し、廃材を最小化します。")
 
     # サイドバーで実行履歴を表示
     with st.sidebar:
@@ -638,27 +647,16 @@ def main():
         # 利用可能な棒の長さを表示
         st.write(f"**{diameter}の利用可能な棒の長さ:** {BASE_PATTERNS[diameter]}")
 
-        # 最適化オプション
-        with st.expander("⚙️ 最適化オプション"):
-            time_limit = st.number_input(
-                "最適化の制限時間 (10~3600 秒)",
-                min_value=10,
-                max_value=3600,
-                value=120,
-                step=10,
-                help="最適化計算の制限時間を設定します。大きな問題では時間を長く設定することを推奨します。"
-            )
-            st.write(f"現在の設定: {time_limit}秒")
-
-            scrap_threshold = st.number_input(
-                "端材閾値 (mm)",
-                min_value=0,
-                max_value=2000,
-                value=400,
-                step=50,
-                help="この閾値未満の端材のみを廃材として歩留り率を計算します。閾値以上の端材は再利用可能として扱われます。"
-            )
-            st.write(f"現在の設定: {scrap_threshold}mm未満を廃材として扱う")
+        # 実行時間の上限設定
+        time_limit = st.number_input(
+            "最適化の制限時間 (10~3600 秒)",
+            min_value=10,
+            max_value=3600,
+            value=120,
+            step=10,
+            help="最適化計算の制限時間を設定します。大きな問題では時間を長く設定することを推奨します。"
+        )
+        st.write(f"現在の設定: {time_limit}秒")
 
         # 入力方法の選択
         input_method = st.radio(
@@ -751,6 +749,16 @@ def main():
 
     with col2:
         st.header("🎯 最適化結果")
+
+        scrap_threshold = st.number_input(
+            "端材閾値 (mm)",
+            min_value=0,
+            max_value=2000,
+            value=400,
+            step=50,
+            help="この閾値未満の端材のみを廃材として歩留り率を計算します。閾値以上の端材は再利用可能として扱われます。"
+        )
+        st.write(f"現在の設定: {scrap_threshold}mm未満を廃材として扱う")
 
         if st.button("最適化を実行", type="primary") and required_cuts:
             with st.spinner("最適化を実行中..."):
