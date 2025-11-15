@@ -207,19 +207,54 @@ def read_cutting_data_from_xlsx(uploaded_file, target_diameter):
     try:
         workbook = openpyxl.load_workbook(uploaded_file, data_only=True)
         total_cutting_data = defaultdict(int)
-        
+
         for sheet_name in workbook.sheetnames:
             worksheet = workbook[sheet_name]
             sheet_cutting_data = extract_cutting_data_from_sheet(worksheet, target_diameter)
-            
+
             for length, count in sheet_cutting_data.items():
                 total_cutting_data[length] += count
-        
+
         workbook.close()
         return dict(total_cutting_data)
-        
+
     except Exception as e:
         st.error(f"XLSXファイルの読み込み中にエラーが発生しました: {e}")
+        return {}
+
+def read_scrap_data_from_csv(uploaded_file):
+    """CSVファイルから再利用端材データを読み込み、同じ長さの端材をまとめる"""
+    try:
+        df = pd.read_csv(uploaded_file)
+
+        # 列名を標準化（スペースを削除）
+        df.columns = df.columns.str.strip()
+
+        # 最初の2列を使用（列名にかかわらず）
+        if len(df.columns) < 2:
+            st.error("CSVファイルには少なくとも2列（長さ、本数）が必要です")
+            return {}
+
+        # データを辞書に変換し、同じ長さの本数をまとめる
+        scrap_data = defaultdict(int)
+        for _, row in df.iterrows():
+            length = row.iloc[0]
+            count = row.iloc[1]
+
+            # 数値チェック
+            if pd.notna(length) and pd.notna(count):
+                try:
+                    length_int = int(float(length))
+                    count_int = int(float(count))
+                    if length_int > 0 and count_int > 0:
+                        scrap_data[length_int] += count_int
+                except (ValueError, TypeError):
+                    continue
+
+        return dict(scrap_data)
+
+    except Exception as e:
+        st.error(f"CSVファイルの読み込み中にエラーが発生しました: {e}")
         return {}
 
 def dfs(index, current_combination, current_sum, remaining_counts, sorted_numbers, max_sum, all_combinations):
@@ -278,13 +313,28 @@ def generate_all_combinations(available_rods, required_cuts):
     all_combinations.sort(key=lambda x: x['rod_length'], reverse=False)
     return all_combinations
 
-def optimal_cutting_plan(c, a, q, time_limit=120):
+def optimal_cutting_plan(c, a, q, time_limit=120, reuse_pattern_counts=None):
     """最適な切り出しプランを計算"""
     n = len(a)
     m = len(q)
 
     prob = pulp.LpProblem("CuttingStockProblem", pulp.LpMinimize)
     x = [pulp.LpVariable(f"y{j+1}", lowBound=0, cat='Integer') for j in range(n)]
+
+    # 再利用端材の本数制約を追加
+    if reuse_pattern_counts:
+        pattern_index = 0
+        for reuse_info in reuse_pattern_counts:
+            pattern_count = reuse_info['pattern_count']
+            rod_count = reuse_info['count']
+
+            # このreuse_rodのパターンに対する制約を追加
+            # x[pattern_index] + x[pattern_index+1] + ... + x[pattern_index+pattern_count-1] <= rod_count
+            if pattern_count > 0:
+                reuse_constraint = pulp.lpSum(x[j] for j in range(pattern_index, pattern_index + pattern_count))
+                prob += reuse_constraint <= rod_count, f"Reuse_constraint_{pattern_index}"
+
+            pattern_index += pattern_count
 
     objective = pulp.lpSum(c[j] * x[j] for j in range(n))
     prob += objective, "Total_Loss"
@@ -362,15 +412,32 @@ def recalculate_with_threshold(cutting_patterns, scrap_threshold):
     }
 
 
-def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method, scrap_threshold=400):
+def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method, scrap_threshold=400, reuse_rods=None):
     start_time = time.perf_counter()
 
     # 必要な切り出し長さを変数として定義
     l = [int(s) for s in required_cuts.keys()]
     q = [int(s) for s in required_cuts.values()]
 
-    # 全組み合わせを計算
-    all_combinations = generate_all_combinations(available_rods, required_cuts)
+    # 再利用端材の処理
+    reuse_pattern_counts = []
+    all_combinations = []
+
+    if reuse_rods:
+        # 各再利用材料からの切断パターンを生成
+        for rod_length, rod_count in reuse_rods.items():
+            rod_combinations = generate_all_combinations([rod_length], required_cuts)
+            pattern_count = len(rod_combinations)
+            reuse_pattern_counts.append({
+                'rod_length': rod_length,
+                'count': rod_count,
+                'pattern_count': pattern_count
+            })
+            all_combinations.extend(rod_combinations)
+
+    # 全組み合わせを計算（通常の材料）
+    normal_combinations = generate_all_combinations(available_rods, required_cuts)
+    all_combinations.extend(normal_combinations)
     combinations_count = len(all_combinations)
 
     # 結果を格納する辞書
@@ -394,7 +461,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
             c.append(combo['loss'])
 
         # 最適な切り出しプランを計算
-        optimal_solution, optimal_value = optimal_cutting_plan(c, a, q, time_limit)
+        optimal_solution, optimal_value = optimal_cutting_plan(c, a, q, time_limit, reuse_pattern_counts)
 
         end_time = time.perf_counter()
         processing_time = end_time - start_time
@@ -404,6 +471,12 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
             used_length = 0
             used_list = []
             cutting_patterns = []
+
+            # 再利用端材の使用本数を追跡
+            used_reuse_rods = {}
+            if reuse_rods:
+                for rod_length in reuse_rods.keys():
+                    used_reuse_rods[rod_length] = 0
 
             for i in range(len(all_combinations)):
                 if int(optimal_solution[i]) > 0:
@@ -417,6 +490,19 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                     total_rod_length += all_combinations[i]['rod_length'] * int(optimal_solution[i])
                     used_length += sum(all_combinations[i]['cuts']) * int(optimal_solution[i])
                     used_list.extend(all_combinations[i]['cuts'] * int(optimal_solution[i]))
+
+                    # 再利用端材の使用本数をカウント
+                    if reuse_rods and all_combinations[i]['rod_length'] in reuse_rods:
+                        used_reuse_rods[all_combinations[i]['rod_length']] += int(optimal_solution[i])
+
+            # 残りの再利用端材を計算
+            remaining_reuse_rods = {}
+            if reuse_rods:
+                for rod_length, total_count in reuse_rods.items():
+                    used_count = used_reuse_rods.get(rod_length, 0)
+                    remaining_count = total_count - used_count
+                    if remaining_count > 0:
+                        remaining_reuse_rods[rod_length] = remaining_count
 
             # 検証
             used_count = [used_list.count(i) for i in l]
@@ -471,6 +557,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                         "cutting_count_df": cutting_count_df,
                         "sheet_cutting_data_all": sheet_cutting_data_all,
                         "cutting_unique_values": cutting_unique_values,
+                        "remaining_reuse_rods": remaining_reuse_rods,
                     }
                 )
             else:
@@ -527,23 +614,40 @@ def display_optimization_results(result, scrap_threshold, tab_key=""):
     st.write("切断パターン")
     st.dataframe(df_results, use_container_width=True)
 
-    # 切断パターンの表示
+    # 再利用端材の表示と処理
     st.write("再利用端材")
     scrap_above_threshold = recalc_result["scrap_above_threshold"]
+
+    # 残った再利用端材を新しい端材リストに追加
+    remaining_reuse_rods = result.get("remaining_reuse_rods", {})
+    combined_scrap_dict = {}
+
+    # 新しい端材を辞書に追加
+    for item in scrap_above_threshold:
+        length = item["length"]
+        count = item["count"]
+        combined_scrap_dict[length] = combined_scrap_dict.get(length, 0) + count
+
+    # 残った再利用端材を追加
+    for length, count in remaining_reuse_rods.items():
+        combined_scrap_dict[length] = combined_scrap_dict.get(length, 0) + count
+
+    # DataFrameに変換
     df_reusable_scrap = pd.DataFrame(
         [
-            {"端材の長さ (mm)": item["length"], "本数": item["count"]}
-            for item in scrap_above_threshold
+            {"端材の長さ (mm)": length, "本数": count}
+            for length, count in sorted(combined_scrap_dict.items(), reverse=True)
         ]
     )
+
     st.dataframe(df_reusable_scrap)
 
     # ダウンロードボタン
     st.write("ダウンロード")
     col_download1, col_download2 = st.columns([1, 1])
     with col_download1:
-        # 閾値以上の端材のCSVダウンロード
-        if scrap_above_threshold:
+        # 閾値以上の端材のCSVダウンロード（新しい端材+残った再利用端材）
+        if not df_reusable_scrap.empty:
             csv_reusable = df_reusable_scrap.to_csv(index=False, encoding="utf-8-sig")
 
             st.download_button(
@@ -752,6 +856,39 @@ def main():
 
         required_cuts = {}
         uploaded_file = None
+        reuse_rods = {}
+
+        # 再利用端材のCSVアップロード
+        st.subheader("再利用端材 (オプション)")
+        scrap_csv_file = st.file_uploader(
+            "再利用端材のCSVファイル (オプション)",
+            type=['csv'],
+            help="端材の長さ (mm),本数 の形式のCSVファイルをアップロードしてください",
+            key="scrap_csv_uploader"
+        )
+
+        if scrap_csv_file is not None:
+            with st.spinner("端材CSVを解析中..."):
+                scrap_data = read_scrap_data_from_csv(scrap_csv_file)
+
+            if scrap_data:
+                reuse_rods = scrap_data
+                st.success(f"再利用端材のCSVファイルを正常に読み込みました。")
+
+                # データの詳細表示
+                st.write("**読み込まれた再利用端材:**")
+                df_scrap_preview = pd.DataFrame([
+                    {'端材の長さ (mm)': length, '本数': count}
+                    for length, count in sorted(scrap_data.items(), reverse=True)
+                ])
+                st.dataframe(df_scrap_preview, use_container_width=True)
+
+                # 統計情報
+                total_scrap_pieces = sum(scrap_data.values())
+                scrap_types = len(scrap_data)
+                st.write(f"**統計情報:** 端材種類数: {scrap_types}種類, 総端材本数: {total_scrap_pieces:,}本")
+            else:
+                st.error("再利用端材のCSVファイルの読み込みに失敗しました。")
 
         if input_method == "XLSXファイルアップロード":
             st.subheader("XLSXファイルアップロード")
@@ -857,14 +994,14 @@ def main():
                 available_rods = BASE_PATTERNS[diameter].copy()
                 # 結果をsession_stateに保存
                 st.session_state.optimization_results = {}
-                
+
                 # 複数材料での最適化
-                result_all = execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method)
+                result_all = execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method, scrap_threshold, reuse_rods if reuse_rods else None)
                 st.session_state.optimization_results['all'] = result_all
 
                 # 単一材料での最適化
                 for rod in available_rods:
-                    result_single = execute_optimizer([rod], required_cuts, diameter, time_limit, uploaded_file, input_method)
+                    result_single = execute_optimizer([rod], required_cuts, diameter, time_limit, uploaded_file, input_method, scrap_threshold, reuse_rods if reuse_rods else None)
                     st.session_state.optimization_results[f'{rod}mm'] = result_single
 
         # 結果がある場合は表示
