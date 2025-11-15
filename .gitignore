@@ -9,9 +9,9 @@
 !/required_cuts.xlsx
 # Python program
 !/read_xlsx.py
-!/cutting_optimizer_ver2.py
+!/cutting_optimizer_ver*.py
 !/result_sheet.py
-!/cutting_optimizer_streamlit*
+!/cutting_optimizer_streamlit_v*.py
 # Sample Output file
 !/result/required_cuts/*
 
