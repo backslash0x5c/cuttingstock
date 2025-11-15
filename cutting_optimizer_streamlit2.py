@@ -313,7 +313,7 @@ def display_cutting_patterns(cutting_patterns):
         cuts_str = " + ".join([str(cut) for cut in pattern['cuts']])
         st.write(f"**{i+1}:** {pattern['rod_length']}mm → ({cuts_str}) [{pattern['loss']}] * {pattern['num']}")
 
-def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method):
+def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method, scrap_threshold=400):
     start_time = time.perf_counter()
 
     # 必要な切り出し長さを変数として定義
@@ -368,19 +368,47 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                 loss = total_rod_length - used_length
                 yield_rate = used_length * 100 / total_rod_length
 
+                # 端材を閾値で分類
+                scrap_below_threshold = 0  # 閾値未満の端材（廃材）
+                scrap_above_threshold = []  # 閾値以上の端材（再利用可能）
+
+                for pattern in cutting_patterns:
+                    pattern_loss = pattern['loss']
+                    pattern_num = pattern['num']
+
+                    if pattern_loss < scrap_threshold:
+                        # 閾値未満の端材は廃材として合計
+                        scrap_below_threshold += pattern_loss * pattern_num
+                    else:
+                        # 閾値以上の端材は再利用可能として記録
+                        scrap_above_threshold.append({
+                            'length': pattern_loss,
+                            'count': pattern_num,
+                            'rod_length': pattern['rod_length']
+                        })
+
+                # 閾値未満の端材のみを廃材とした歩留り率
+                # used_length_with_reusable = total_rod_length - scrap_below_threshold
+                yield_rate_with_threshold = (total_rod_length - scrap_below_threshold) * 100 / total_rod_length
+
                 # 結果を表示
                 st.success("最適化が完了しました！")
 
                 # サマリー表示
-                col_summary1, col_summary2 = st.columns([1, 1])
+                col_summary1, col_summary2, col_summary3 = st.columns([1, 1, 1])
 
                 with col_summary1:
-                    st.metric("歩留り率", f"{yield_rate:.2f}%")
+                    st.metric("歩留り率（従来）", f"{yield_rate:.2f}%")
                     st.metric("処理時間", f"{processing_time:.4f} s")
 
                 with col_summary2:
-                    st.metric("端材", f"{loss:,} mm")
+                    st.metric("端材（全体）", f"{loss:,} mm")
                     st.metric("総材料長", f"{total_rod_length:,} mm")
+
+                with col_summary3:
+                    st.metric("歩留り率（閾値適用）", f"{yield_rate_with_threshold:.2f}%",
+                             delta=f"{yield_rate_with_threshold - yield_rate:.2f}%")
+                    st.metric("廃材（<{0}mm）".format(scrap_threshold), f"{scrap_below_threshold:,} mm")
 
                 # 切断パターンの表示
                 st.write("切断パターン")
@@ -421,15 +449,27 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                 # ダウンロードボタン
                 col_download1, col_download2 = st.columns([1, 1])
 
-                # with col_download1:
-                #     # CSVダウンロード
-                #     csv_data = df_results.to_csv(index=False, encoding='utf-8-sig')
-                #     st.download_button(
-                #         label="結果をCSVでダウンロード",
-                #         data=csv_data,
-                #         file_name=f"result_{diameter}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                #         mime='text/csv'
-                #     )
+                with col_download1:
+                    # 閾値以上の端材のCSVダウンロード
+                    if scrap_above_threshold:
+                        df_reusable_scrap = pd.DataFrame([
+                            {
+                                # '元の棒の長さ (mm)': item['rod_length'],
+                                '端材の長さ (mm)': item['length'],
+                                '本数': item['count']
+                            }
+                            for item in scrap_above_threshold
+                        ])
+                        csv_reusable = df_reusable_scrap.to_csv(index=False, encoding='utf-8-sig')
+                        st.download_button(
+                            label=f"再利用端材リストダウンロード\n(≥{scrap_threshold}mm)",
+                            data=csv_reusable,
+                            file_name=f"reusable_scrap_{diameter}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv",
+                            key=f"{available_rods}_reuse_list",
+                        )
+                    else:
+                        st.info(f"再利用可能な端材（≥{scrap_threshold}mm）はありません")
 
                 with col_download2:
                     # Excelダウンロード
@@ -530,7 +570,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                     new_buffer.seek(0)
 
                     st.download_button(
-                        label="Excelダウンロード",
+                        label="結果ダウンロード",
                         data=new_buffer.getvalue(),
                         file_name=f"result_sheet_{diameter}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -609,6 +649,16 @@ def main():
                 help="最適化計算の制限時間を設定します。大きな問題では時間を長く設定することを推奨します。"
             )
             st.write(f"現在の設定: {time_limit}秒")
+
+            scrap_threshold = st.number_input(
+                "端材閾値 (mm)",
+                min_value=0,
+                max_value=2000,
+                value=400,
+                step=50,
+                help="この閾値未満の端材のみを廃材として歩留り率を計算します。閾値以上の端材は再利用可能として扱われます。"
+            )
+            st.write(f"現在の設定: {scrap_threshold}mm未満を廃材として扱う")
 
         # 入力方法の選択
         input_method = st.radio(
@@ -712,12 +762,12 @@ def main():
 
                 # 複数材料での最適化
                 with tabs[0]:
-                    execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method)
+                    execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploaded_file, input_method, scrap_threshold)
 
                 # 単一材料での最適化
                 for i, rod in enumerate(available_rods):
                     with tabs[i+1]:
-                        execute_optimizer([rod], required_cuts, diameter, time_limit, uploaded_file, input_method)
+                        execute_optimizer([rod], required_cuts, diameter, time_limit, uploaded_file, input_method, scrap_threshold)
 
         elif not required_cuts:
             st.info("切断指示を入力してください。")
