@@ -1,65 +1,65 @@
-# 鉄筋切断最適化アプリ
+# Rebar Cutting Stock Optimization Application
 
-鉄筋の切断パターンを最適化し、廃材を最小化するStreamlitベースのWebアプリケーションです。深さ優先探索アルゴリズムと整数線形計画法を使用して、最適な切断計画を生成します。
+A Streamlit-based web application that optimizes rebar cutting patterns to minimize waste. It uses depth-first search (DFS) algorithms and integer linear programming (ILP) to generate optimal cutting plans.
 
-## 主な機能
+## Key Features
 
-### 🎯 最適化機能
-- **複数材料最適化**: すべての利用可能な棒の長さを使用した最適化
-- **単一材料最適化**: 特定の棒の長さのみを使用した最適化
-- **再利用端材の活用**: 既存の端材を優先的に使用して新材料の使用量を削減
+### 🎯 Optimization Features
+- **Multi-material optimization**: Optimization using all available rod lengths
+- **Single-material optimization**: Optimization using only specific rod lengths
+- **Reuse scrap materials**: Prioritize using existing scrap to reduce new material usage
 
-### 📊 入力方法
-1. **XLSXファイルアップロード**: 切断集計表のExcelファイルから自動読み込み
-2. **手入力**: 必要な切り出し長さと本数を直接入力
-3. **再利用端材CSV入力**: 既存の端材データをCSVファイルで入力（オプション）
+### 📊 Input Methods
+1. **XLSX File Upload**: Automatically load data from Excel cutting specification sheets
+2. **Manual Input**: Directly input required cut lengths and quantities
+3. **Reuse Scrap CSV Input**: Import existing scrap data via CSV file (optional)
 
-### 📈 結果表示
-- 歩留り率の計算（再利用なし/再利用あり）
-- 切断パターンの詳細表示
-- 再利用可能な端材リスト（閾値以上）
-- 実行履歴の保存と表示
-- 処理時間と組み合わせ数の統計
+### 📈 Results Display
+- Yield rate calculation (with/without reuse)
+- Detailed cutting pattern display
+- Reusable scrap list (above threshold)
+- Execution history storage and display
+- Processing time and combination count statistics
 
-### 💾 ダウンロード機能
-- **再利用端材リストCSV**: 新しい端材と使用されなかった再利用端材を統合
-- **最適化結果Excel**: 切断パターン、集計表、サマリーシートを含む
+### 💾 Download Features
+- **Reusable Scrap List CSV**: Combines new scraps with unused reuse scraps
+- **Optimization Results Excel**: Includes cutting patterns, summary tables, and sheets
 
-## 使用方法
+## Usage
 
-### アプリケーションの起動
+### Starting the Application
 
 ```bash
 streamlit run cutting_optimizer_streamlit_v2.py
 ```
 
-### 基本的な使い方
+### Basic Workflow
 
-1. **鉄筋径の選択**: D10, D13, D16, D19, D22から選択
-2. **再利用端材の入力（オプション）**: CSVファイルをアップロード
+1. **Select Rebar Diameter**: Choose from D10, D13, D16, D19, D22
+2. **Input Reuse Scraps (Optional)**: Upload CSV file
    ```csv
-   端材の長さ (mm),本数
+   Length (mm),Quantity
    405,3
    1000,1
    1915,2
    ```
-3. **切断指示の入力**: XLSXファイルまたは手入力で必要な切り出しを指定
-4. **端材閾値の設定**: 再利用可能な端材の最小長さを設定（デフォルト: 400mm）
-5. **最適化の実行**: ボタンをクリックして計算を開始
-6. **結果の確認とダウンロード**: タブで各材料の結果を確認し、必要に応じてダウンロード
+3. **Input Cutting Instructions**: Specify required cuts via XLSX file or manual input
+4. **Set Scrap Threshold**: Set minimum length for reusable scraps (default: 400mm)
+5. **Execute Optimization**: Click button to start calculation
+6. **Review and Download Results**: Check results in tabs for each material and download as needed
 
-## 依存パッケージ
+## Dependencies
 
 ```bash
 pip install streamlit pandas pulp openpyxl
 ```
 
-- `streamlit`: Webインターフェース
-- `pandas`: データ処理とCSV/Excel操作
-- `pulp`: 整数線形計画法ソルバー
-- `openpyxl`: Excelファイルの読み書き
+- `streamlit`: Web interface
+- `pandas`: Data processing and CSV/Excel operations
+- `pulp`: Integer linear programming solver
+- `openpyxl`: Excel file read/write
 
-## 対応鉄筋径と利用可能な棒の長さ
+## Supported Rebar Diameters and Available Rod Lengths
 
 ```python
 BASE_PATTERNS = {
@@ -71,62 +71,62 @@ BASE_PATTERNS = {
 }
 ```
 
-## アルゴリズム
+## Algorithms
 
-### 1. 深さ優先探索 (DFS)
-- 利用可能な材料長さ内で切り出し可能な全ての組み合わせを生成
-- 枝刈りにより無効な組み合わせを除外（current_sum > max_sum）
-- 計算済みの組み合わせを再利用して効率化
+### 1. Depth-First Search (DFS)
+- Generates all possible cutting combinations within available material lengths
+- Prunes invalid combinations (current_sum > max_sum)
+- Reuses calculated combinations for efficiency
 
-### 2. 整数線形計画法 (ILP)
-- PuLPライブラリを使用して最適化問題を解決
-- 目的関数: 総ロス（端材）の最小化
-- 制約条件:
-  - 需要制約: 各切り出し長さの必要本数を満たす
-  - 再利用端材制約: 各再利用材料の利用可能本数を超えない
+### 2. Integer Linear Programming (ILP)
+- Solves optimization problem using PuLP library
+- Objective function: Minimize total loss (scrap)
+- Constraints:
+  - Demand constraints: Satisfy required quantities for each cut length
+  - Reuse scrap constraints: Do not exceed available quantities for each reuse material
 
-### 3. 再利用端材の処理
-- 入力された再利用端材から切断パターンを生成
-- 最適化時に優先的に使用（本数制約付き）
-- 使用されなかった端材を新しい端材と統合してダウンロード
+### 3. Reuse Scrap Processing
+- Generates cutting patterns from input reuse scraps
+- Prioritizes usage during optimization (with quantity constraints)
+- Combines unused scraps with new scraps for download
 
-## データフロー
+## Data Flow
 
 ```
-[入力]
-  ├─ 切断指示 (XLSX/手入力)
-  └─ 再利用端材 (CSV)
+[Input]
+  ├─ Cutting Instructions (XLSX/Manual)
+  └─ Reuse Scraps (CSV)
       ↓
-[処理]
-  ├─ 組み合わせ生成 (DFS)
-  ├─ 最適化計算 (ILP)
-  └─ 結果集計
+[Processing]
+  ├─ Combination Generation (DFS)
+  ├─ Optimization Calculation (ILP)
+  └─ Result Aggregation
       ↓
-[出力]
-  ├─ 切断パターン表示
-  ├─ 歩留り率計算
-  ├─ 再利用端材リスト (CSV)
-  └─ 最適化結果 (Excel)
+[Output]
+  ├─ Cutting Pattern Display
+  ├─ Yield Rate Calculation
+  ├─ Reusable Scrap List (CSV)
+  └─ Optimization Results (Excel)
 ```
 
-## 再利用端材の循環利用
+## Reuse Scrap Circulation
 
-### 入力例
+### Input Example
 ```csv
-端材の長さ (mm),本数
+Length (mm),Quantity
 405,3
 1000,1
 1915,2
 ```
 
-### 最適化結果
-- 405mmを1本使用
-- 1915mmを2本使用
-- 新しい端材: 610mm×5本、1020mm×2本、830mm×3本
+### Optimization Results
+- 405mm: 1 piece used
+- 1915mm: 2 pieces used
+- New scraps: 610mm×5, 1020mm×2, 830mm×3
 
-### ダウンロードCSV（統合後）
+### Download CSV (Combined)
 ```csv
-端材の長さ (mm),本数
+Length (mm),Quantity
 1020,2
 1000,1
 830,3
@@ -134,45 +134,46 @@ BASE_PATTERNS = {
 405,2
 ```
 
-## パフォーマンス設定
+## Performance Settings
 
-- **最適化制限時間**: 10～3600秒（デフォルト: 120秒）
-- **組み合わせ生成**: 大規模問題では計算に時間がかかる場合があります
-- **結果保存**: セッション状態に保存され、閾値変更時も再計算なしで表示更新
+- **Optimization Time Limit**: 10-3600 seconds (default: 120 seconds)
+- **Combination Generation**: May take time for large-scale problems
+- **Result Storage**: Saved in session state, updates display without recalculation when threshold changes
 
-## ファイル構造
+## File Structure
 
 ```
 cuttingstock/
-├── cutting_optimizer_streamlit_v2.py  # メインアプリケーション
-├── README.md                          # このファイル
-└── test_scrap.csv                     # テスト用端材データ
+├── cutting_optimizer_streamlit_v2.py  # Main application
+├── README.md                          # This file (English)
+├── README_ja.md                       # Japanese README
+└── test_scrap.csv                     # Test scrap data
 ```
 
-## 出力結果の詳細
+## Output Details
 
-### 切断パターン表
-- ID、使用回数、ロス、ベース材料長、切断パターン
+### Cutting Pattern Table
+- ID, usage count, loss, base material length, cutting pattern
 
-### 出力結果集計表
-- 各切り出し長さの合計本数
-- 合計行に数式設定
+### Output Summary Table
+- Total quantities for each cut length
+- Formula-based sum row
 
-### 切断指示集計表（XLSXアップロード時）
-- シートごとの切断指示データ
-- 合計行と差分計算
+### Cutting Instruction Summary Table (XLSX upload)
+- Cutting instruction data per sheet
+- Sum row and difference calculations
 
-### サマリーシート
-- 径、歩留り率、総材料長、処理時間
-- 出力結果と切断指示の差分表示
+### Summary Sheet
+- Diameter, yield rate, total material length, processing time
+- Difference display between output results and cutting instructions
 
-## 注意事項
+## Notes
 
-- CSVファイルは「端材の長さ (mm),本数」の2列形式で作成してください
-- 同じ長さの端材は自動的に集約されます
-- 再利用端材の使用は任意で、アップロードしない場合は通常の最適化が実行されます
-- 大規模な問題では制限時間を長めに設定することを推奨します
+- CSV files should be in 2-column format: "Length (mm),Quantity"
+- Scraps of the same length are automatically aggregated
+- Reuse scrap usage is optional; normal optimization runs without upload
+- For large-scale problems, recommend setting longer time limits
 
-## ライセンス
+## License
 
-このプロジェクトは鉄筋切断の最適化を目的としたツールです。
+This project is a tool for rebar cutting optimization.
