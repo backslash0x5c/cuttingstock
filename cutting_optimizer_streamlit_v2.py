@@ -472,6 +472,12 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
             used_list = []
             cutting_patterns = []
 
+            # 再利用端材の使用本数を追跡
+            used_reuse_rods = {}
+            if reuse_rods:
+                for rod_length in reuse_rods.keys():
+                    used_reuse_rods[rod_length] = 0
+
             for i in range(len(all_combinations)):
                 if int(optimal_solution[i]) > 0:
                     pattern = {
@@ -484,6 +490,19 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                     total_rod_length += all_combinations[i]['rod_length'] * int(optimal_solution[i])
                     used_length += sum(all_combinations[i]['cuts']) * int(optimal_solution[i])
                     used_list.extend(all_combinations[i]['cuts'] * int(optimal_solution[i]))
+
+                    # 再利用端材の使用本数をカウント
+                    if reuse_rods and all_combinations[i]['rod_length'] in reuse_rods:
+                        used_reuse_rods[all_combinations[i]['rod_length']] += int(optimal_solution[i])
+
+            # 残りの再利用端材を計算
+            remaining_reuse_rods = {}
+            if reuse_rods:
+                for rod_length, total_count in reuse_rods.items():
+                    used_count = used_reuse_rods.get(rod_length, 0)
+                    remaining_count = total_count - used_count
+                    if remaining_count > 0:
+                        remaining_reuse_rods[rod_length] = remaining_count
 
             # 検証
             used_count = [used_list.count(i) for i in l]
@@ -538,6 +557,7 @@ def execute_optimizer(available_rods, required_cuts, diameter, time_limit, uploa
                         "cutting_count_df": cutting_count_df,
                         "sheet_cutting_data_all": sheet_cutting_data_all,
                         "cutting_unique_values": cutting_unique_values,
+                        "remaining_reuse_rods": remaining_reuse_rods,
                     }
                 )
             else:
@@ -594,23 +614,40 @@ def display_optimization_results(result, scrap_threshold, tab_key=""):
     st.write("切断パターン")
     st.dataframe(df_results, use_container_width=True)
 
-    # 切断パターンの表示
+    # 再利用端材の表示と処理
     st.write("再利用端材")
     scrap_above_threshold = recalc_result["scrap_above_threshold"]
+
+    # 残った再利用端材を新しい端材リストに追加
+    remaining_reuse_rods = result.get("remaining_reuse_rods", {})
+    combined_scrap_dict = {}
+
+    # 新しい端材を辞書に追加
+    for item in scrap_above_threshold:
+        length = item["length"]
+        count = item["count"]
+        combined_scrap_dict[length] = combined_scrap_dict.get(length, 0) + count
+
+    # 残った再利用端材を追加
+    for length, count in remaining_reuse_rods.items():
+        combined_scrap_dict[length] = combined_scrap_dict.get(length, 0) + count
+
+    # DataFrameに変換
     df_reusable_scrap = pd.DataFrame(
         [
-            {"端材の長さ (mm)": item["length"], "本数": item["count"]}
-            for item in scrap_above_threshold
+            {"端材の長さ (mm)": length, "本数": count}
+            for length, count in sorted(combined_scrap_dict.items(), reverse=True)
         ]
     )
+
     st.dataframe(df_reusable_scrap)
 
     # ダウンロードボタン
     st.write("ダウンロード")
     col_download1, col_download2 = st.columns([1, 1])
     with col_download1:
-        # 閾値以上の端材のCSVダウンロード
-        if scrap_above_threshold:
+        # 閾値以上の端材のCSVダウンロード（新しい端材+残った再利用端材）
+        if not df_reusable_scrap.empty:
             csv_reusable = df_reusable_scrap.to_csv(index=False, encoding="utf-8-sig")
 
             st.download_button(
