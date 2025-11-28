@@ -7,9 +7,10 @@
 !/README*.md
 # Input file
 !/required_cuts.xlsx
+!/reusable_scrap.csv
 # Python program
 !/read_xlsx.py
-!/cutting_optimizer_ver*.py
+!/cutting_optimizer_cli*.py
 !/result_sheet.py
 !/cutting_optimizer_streamlit_v*.py
 # Sample Output file
