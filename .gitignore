@@ -1,18 +1,19 @@
-# Whitelist ignore
+# Whitelist Ignore
 *
 !*/
-
-# allowed file/dir
+# Allowed File, Dir
 !/.gitignore
 !/README*.md
-# Input file
+# Input File (Sample)
 !/required_cuts.xlsx
-# Python program
-!/read_xlsx.py
-!/cutting_optimizer_cli*.py
-!/result_sheet.py
+!/reusable_scrap.csv
+# Main Program (Streamlit)
 !/cutting_optimizer_streamlit_v*.py
+# Prototype Program (CLI)
+!/read_xlsx.py
+!/result_sheet.py
+!/cutting_optimizer_cli*.py
 
-# disallowed
+# Disallowed
 .DS_Store
 Thumbs.db

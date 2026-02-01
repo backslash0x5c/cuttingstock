@@ -1,72 +1,72 @@
-# Rebar Cutting Stock Optimization Application
+# 鉄筋切断最適化アプリ
 
-A Streamlit-based web application that optimizes rebar cutting patterns to minimize waste. It uses depth-first search (DFS) algorithms and integer linear programming (ILP) to generate optimal cutting plans.
+鉄筋の切断パターンを最適化し、廃材を最小化するStreamlitベースのWebアプリケーションです。深さ優先探索アルゴリズムと整数線形計画法を使用して、最適な切断計画を生成します。
 
-## Key Features
+## 主な機能
 
-### 🎯 Optimization Features
-- **Multi-diameter optimization**: Simultaneously optimize for all rebar diameters (D10, D13, D16, D19, D22)
-- **Multi-material optimization**: Optimization using all available rod lengths for each diameter
-- **Flexible material selection**: Choose specific rod lengths for each diameter via checkboxes
-- **Reuse scrap materials**: Prioritize using existing scrap to reduce new material usage
-- **Sheet-based assignment**: Assign cutting patterns to construction sheets with proper execution order
+### 🎯 最適化機能
+- **複数径同時最適化**: 全ての鉄筋径（D10、D13、D16、D19、D22）を同時に最適化
+- **複数材料最適化**: 各径ごとにすべての利用可能な棒の長さを使用した最適化
+- **柔軟な材料選択**: チェックボックスで各径ごとに使用する材料長を選択可能
+- **再利用端材の活用**: 既存の端材を優先的に使用して新材料の使用量を削減
+- **シート単位の割り当て**: 切断パターンを施工シート単位で適切な実行順序で割り当て
 
-### 📊 Input Methods
-1. **XLSX File Upload**: Automatically load data from Excel cutting specification sheets (supports all diameters)
-2. **Reuse Scrap CSV Input**: Import existing scrap data via CSV file with diameter information (optional)
+### 📊 入力方法
+1. **XLSXファイルアップロード**: 切断集計表のExcelファイルから全径のデータを自動読み込み
+2. **再利用端材CSV入力**: 径情報を含む既存の端材データをCSVファイルで入力（オプション）
 
-### 📈 Results Display
-- **Consolidated sheet-based view**: Shows cutting order by construction sheet across all diameters
-- **Inventory operations tracking**: Records material withdrawal and storage operations for each sheet
-- **Color-coded display**: Different background colors for each sheet for easy identification
-- Yield rate calculation (with/without reuse) for each diameter
-- Detailed cutting pattern display per diameter
-- Reusable scrap list (above threshold) consolidated across all diameters
-- Processing time and combination count statistics per diameter
+### 📈 結果表示
+- **シート別統合ビュー**: 全径の切断順序を施工シート単位で表示
+- **在庫操作の追跡**: 各シートの材料取り出しと保管操作を記録
+- **色分け表示**: シートごとに異なる背景色で識別しやすく表示
+- 各径ごとの歩留り率の計算（再利用なし/再利用あり）
+- 各径ごとの切断パターンの詳細表示
+- 全径統合の再利用可能な端材リスト（閾値以上）
+- 各径ごとの処理時間と組み合わせ数の統計
 
-### 💾 Download Features
-- **Sheet-based Cutting Order Excel**: Complete cutting sequence organized by construction sheet
-- **Consolidated Reusable Scrap List CSV**: Combines all diameter scraps with unused reuse scraps
-- **Per-diameter Optimization Results Excel**: Includes cutting patterns, summary tables, and sheets for each diameter
+### 💾 ダウンロード機能
+- **シート別切断順序Excel**: 施工シート単位で整理された完全な切断順序
+- **全径統合再利用端材リストCSV**: 全径の端材と使用されなかった再利用端材を統合
+- **各径別最適化結果Excel**: 各径ごとの切断パターン、集計表、サマリーシートを含む
 
-## Usage
+## 使用方法
 
-### Starting the Application
+### アプリケーションの起動
 
 ```bash
 streamlit run cutting_optimizer_streamlit_v4.py
 ```
 
-### Basic Workflow
+### 基本的な使い方
 
-1. **Select Material Lengths**: Use checkboxes to select available rod lengths for each diameter (D10-D22)
-2. **Set Time Limit**: Configure optimization time limit (10-3600 seconds, default: 120s)
-3. **Upload XLSX File**: Upload cutting specification sheet containing all diameter data
-4. **Input Reuse Scraps (Optional)**: Upload CSV file with 3 columns (diameter, length, quantity)
+1. **材料長の選択**: チェックボックスで各径（D10-D22）ごとに使用可能な材料長を選択
+2. **時間制限の設定**: 最適化計算の制限時間を設定（10-3600秒、デフォルト: 120秒）
+3. **XLSXファイルのアップロード**: 全径のデータを含む切断集計表をアップロード
+4. **再利用端材の入力（オプション）**: 3列（径、長さ、本数）形式のCSVファイルをアップロード
    ```csv
-   Diameter,Length (mm),Quantity
+   鉄筋径,端材の長さ (mm),本数
    D13,405,3
    D13,1000,1
    D16,1915,2
    ```
-5. **Set Scrap Threshold**: Set minimum length for reusable scraps (default: 400mm)
-6. **Execute Optimization**: Click button to start multi-diameter optimization
-7. **Review Sheet-based Results**: Check consolidated cutting order by construction sheet
-8. **Review Diameter Details**: Check detailed results in tabs for each diameter
-9. **Download Results**: Download sheet-based cutting order and consolidated scrap list
+5. **端材閾値の設定**: 再利用可能な端材の最小長さを設定（デフォルト: 400mm）
+6. **最適化の実行**: ボタンをクリックして複数径の最適化を開始
+7. **シート別結果の確認**: 施工シート別の統合切断順序を確認
+8. **径別詳細の確認**: タブで各径の詳細結果を確認
+9. **結果のダウンロード**: シート別切断順序と統合端材リストをダウンロード
 
-## Dependencies
+## 依存パッケージ
 
 ```bash
 pip install streamlit pandas pulp openpyxl
 ```
 
-- `streamlit`: Web interface
-- `pandas`: Data processing and CSV/Excel operations
-- `pulp`: Integer linear programming solver
-- `openpyxl`: Excel file read/write
+- `streamlit`: Webインターフェース
+- `pandas`: データ処理とCSV/Excel操作
+- `pulp`: 整数線形計画法ソルバー
+- `openpyxl`: Excelファイルの読み書き
 
-## Supported Rebar Diameters and Available Rod Lengths
+## 対応鉄筋径と利用可能な棒の長さ
 
 ```python
 BASE_PATTERNS = {
@@ -78,75 +78,75 @@ BASE_PATTERNS = {
 }
 ```
 
-## Algorithms
+## アルゴリズム
 
-### 1. Depth-First Search (DFS)
-- Generates all possible cutting combinations within available material lengths
-- Prunes invalid combinations (current_sum > max_sum)
-- Reuses calculated combinations for efficiency
+### 1. 深さ優先探索 (DFS)
+- 利用可能な材料長さ内で切り出し可能な全ての組み合わせを生成
+- 枝刈りにより無効な組み合わせを除外（current_sum > max_sum）
+- 計算済みの組み合わせを再利用して効率化
 
-### 2. Integer Linear Programming (ILP)
-- Solves optimization problem using PuLP library
-- Objective function: Minimize total loss (scrap)
-- Constraints:
-  - Demand constraints: Satisfy required quantities for each cut length
-  - Reuse scrap constraints: Do not exceed available quantities for each reuse material
+### 2. 整数線形計画法 (ILP)
+- PuLPライブラリを使用して最適化問題を解決
+- 目的関数: 総ロス（端材）の最小化
+- 制約条件:
+  - 需要制約: 各切り出し長さの必要本数を満たす
+  - 再利用端材制約: 各再利用材料の利用可能本数を超えない
 
-### 3. Reuse Scrap Processing
-- Generates cutting patterns from input reuse scraps per diameter
-- Prioritizes usage during optimization (with quantity constraints)
-- Combines unused scraps with new scraps for download
+### 3. 再利用端材の処理
+- 各径ごとに入力された再利用端材から切断パターンを生成
+- 最適化時に優先的に使用（本数制約付き）
+- 使用されなかった端材を新しい端材と統合してダウンロード
 
-### 4. Sheet-based Pattern Assignment
-- Assigns cutting patterns to construction sheets in execution order
-- Tracks inventory operations (withdrawal/storage) between sheets
-- Minimizes intermediate inventory by matching patterns to sheet demands
-- Maintains original sheet order from XLSX file
+### 4. シート単位のパターン割り当て
+- 切断パターンを施工シート単位で実行順序に従って割り当て
+- シート間の在庫操作（取り出し/保管）を追跡
+- パターンとシート需要をマッチングして中間在庫を最小化
+- XLSXファイルの元のシート順序を維持
 
-## Data Flow
+## データフロー
 
 ```
-[Input]
-  ├─ Cutting Instructions (XLSX - all diameters)
-  ├─ Reuse Scraps (CSV - with diameter column)
-  └─ Material Selection (checkbox per diameter)
+[入力]
+  ├─ 切断指示 (XLSX - 全径対応)
+  ├─ 再利用端材 (CSV - 径列付き)
+  └─ 材料選択 (径ごとのチェックボックス)
       ↓
-[Processing - Per Diameter]
-  ├─ Combination Generation (DFS)
-  ├─ Optimization Calculation (ILP)
-  └─ Pattern-to-Sheet Assignment
+[処理 - 径ごと]
+  ├─ 組み合わせ生成 (DFS)
+  ├─ 最適化計算 (ILP)
+  └─ パターンのシート割り当て
       ↓
-[Consolidation]
-  ├─ Merge results across diameters
-  ├─ Sort by sheet order and diameter
-  └─ Track inventory operations
+[統合]
+  ├─ 径間での結果マージ
+  ├─ シート順序と径でソート
+  └─ 在庫操作の追跡
       ↓
-[Output]
-  ├─ Sheet-based Cutting Order (Excel)
-  ├─ Diameter-specific Results (tabs)
-  ├─ Yield Rate Calculation (per diameter)
-  ├─ Consolidated Reusable Scrap List (CSV)
-  └─ Per-diameter Optimization Results (Excel)
+[出力]
+  ├─ シート別切断順序 (Excel)
+  ├─ 径別詳細結果 (タブ表示)
+  ├─ 歩留り率計算 (径ごと)
+  ├─ 全径統合再利用端材リスト (CSV)
+  └─ 径別最適化結果 (Excel)
 ```
 
-## Multi-Diameter Reuse Scrap Circulation
+## 複数径対応の再利用端材循環利用
 
-### Input Example (CSV with diameter)
+### 入力例（径列付きCSV）
 ```csv
-Diameter,Length (mm),Quantity
+鉄筋径,端材の長さ (mm),本数
 D13,405,3
 D13,1000,1
 D16,1915,2
 ```
 
-### Optimization Results (per diameter)
-- **D13**: 405mm×1 used, 1000mm×1 unused
-- **D16**: 1915mm×2 used
-- **New scraps**: D13: 610mm×5, D16: 1020mm×2, 830mm×3
+### 最適化結果（径ごと）
+- **D13**: 405mm×1本使用、1000mm×1本未使用
+- **D16**: 1915mm×2本使用
+- **新しい端材**: D13: 610mm×5本、D16: 1020mm×2本、830mm×3本
 
-### Download CSV (Consolidated across all diameters)
+### ダウンロードCSV（全径統合後）
 ```csv
-Diameter,Length (mm),Quantity
+鉄筋径,端材の長さ (mm),本数
 D16,1020,2
 D13,1000,1
 D16,830,3
@@ -154,59 +154,59 @@ D13,610,5
 D13,405,2
 ```
 
-## Performance Settings
+## パフォーマンス設定
 
-- **Optimization Time Limit**: 10-3600 seconds (default: 120 seconds)
-- **Combination Generation**: May take time for large-scale problems
-- **Result Storage**: Saved in session state, updates display without recalculation when threshold changes
+- **最適化制限時間**: 10～3600秒（デフォルト: 120秒）
+- **組み合わせ生成**: 大規模問題では計算に時間がかかる場合があります
+- **結果保存**: セッション状態に保存され、閾値変更時も再計算なしで表示更新
 
-## File Structure
+## ファイル構造
 
 ```
 cuttingstock/
-├── cutting_optimizer_streamlit_v4.py  # Main application (multi-diameter support)
-├── cutting_optimizer_streamlit_v2.py  # Previous version (single diameter)
-├── README.md                          # This file (English)
-├── README_ja.md                       # Japanese README
-└── test_scrap.csv                     # Test scrap data
+├── cutting_optimizer_streamlit_v4.py  # メインアプリケーション（複数径対応）
+├── cutting_optimizer_streamlit_v2.py  # 旧バージョン（単一径）
+├── README.md                          # 英語版README
+├── README_ja.md                       # このファイル
+└── test_scrap.csv                     # テスト用端材データ
 ```
 
-## Output Details
+## 出力結果の詳細
 
-### Sheet-based Cutting Order Table (Consolidated)
-- Cutting sequence number, sheet name, diameter, operation type
-- Number of rods, base material length, cutting pattern, loss
-- Color-coded by sheet for easy identification
-- Includes inventory withdrawal and storage operations
+### シート別切断順序表（全径統合）
+- 切断順序番号、シート名、径、操作種別
+- 本数、ベース材料長、切断パターン、ロス
+- シートごとに色分けして識別しやすく表示
+- 在庫取り出しと保管操作も含む
 
-### Per-Diameter Cutting Pattern Table
-- ID, cutting order, sheet name, operation type
-- Base material length, cutting pattern, loss
-- Color-coded by sheet and highlighted for reuse materials
+### 径別切断パターン表
+- ID、切断順序、シート名、操作種別
+- ベース材料長、切断パターン、ロス
+- シートごとに色分け、再利用材料は別色でハイライト
 
-### Output Summary Table (per diameter)
-- Total quantities for each cut length
-- Formula-based sum row
+### 出力結果集計表（径ごと）
+- 各切り出し長さの合計本数
+- 合計行に数式設定
 
-### Cutting Instruction Summary Table (XLSX upload, per diameter)
-- Cutting instruction data per sheet
-- Sum row and difference calculations
+### 切断指示集計表（XLSXアップロード時、径ごと）
+- シートごとの切断指示データ
+- 合計行と差分計算
 
-### Summary Sheet (per diameter)
-- Diameter, yield rate (with/without reuse), total material length
-- Processing time, scrap threshold
-- Difference display between output results and cutting instructions
+### サマリーシート（径ごと）
+- 径、歩留り率（再利用なし/あり）、総材料長
+- 処理時間、端材閾値
+- 出力結果と切断指示の差分表示
 
-## Notes
+## 注意事項
 
-- **Reuse scrap CSV files** should be in 3-column format: "Diameter,Length (mm),Quantity"
-- **Material selection** is required for each diameter you want to optimize
-- **Sheet order** in the consolidated view follows the original XLSX file order
-- Scraps of the same diameter and length are automatically aggregated
-- Reuse scrap usage is optional; normal optimization runs without upload
-- For large-scale problems (multiple diameters, many cut types), recommend setting longer time limits
-- The app automatically validates that selected materials can accommodate the cutting requirements
+- **再利用端材CSVファイル**は「鉄筋径,端材の長さ (mm),本数」の3列形式で作成してください
+- **材料選択**は最適化したい各径ごとに必要です
+- **シート順序**は統合ビューで元のXLSXファイルの順序に従います
+- 同じ径と長さの端材は自動的に集約されます
+- 再利用端材の使用は任意で、アップロードしない場合は通常の最適化が実行されます
+- 大規模な問題（複数径、多くの切断種類）では制限時間を長めに設定することを推奨します
+- アプリは選択された材料長が切断要件を満たせるか自動的に検証します
 
-## License
+## ライセンス
 
-This project is a tool for rebar cutting optimization.
+このプロジェクトは鉄筋切断の最適化を目的としたツールです。
